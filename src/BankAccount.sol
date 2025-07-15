@@ -65,9 +65,15 @@ contract BankAccount {
      * @notice This function is internal and should be called with caution.
      */
     function _freezeAccount(address owner) internal {
+        // Check if the owner address is valid
         if(owner == address(0)) {
             revert BankAccount__InvalidAddress(); // Revert if the owner is the zero address
         }
+        // Ensure the account is currently active
+        if (!_isAccountActive(owner)) {
+            revert BankAccount__AccountNotActive(); // Revert if the account is not active
+        }
+        // Freeze the account
         s_accounts_active[owner] = false; // Freeze account
     }
 
@@ -78,6 +84,7 @@ contract BankAccount {
      * @notice This function is internal and should be called with caution.
      */
     function _activateAccount(address owner) internal {
+        // Check if the owner address is valid
         if(owner == address(0)) {
             revert BankAccount__InvalidAddress(); // Revert if the owner is the zero address
         }
