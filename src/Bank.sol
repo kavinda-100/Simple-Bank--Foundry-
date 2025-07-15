@@ -31,7 +31,9 @@ contract Bank is AccessControl {
     IBankAccount private immutable i_bankAccount; // Immutable variable to store the bank account contract address
     address private immutable i_owner; // Immutable variable to store the owner of the bank contract
     uint256 private constant MAX_BORROW_AMOUNT = 100 ether; // Maximum amount that can be borrowed
-    uint256 private constant INTEREST_RATE = 5; // Interest rate for borrowing, represented as a percentage
+    uint256 private constant INTEREST_RATE = 500; // Interest rate in basis points (500 = 5.00%)
+    uint256 private constant BASIS_POINTS = 10000; // 1 basis point = 0.01%
+    uint256 private constant SECONDS_IN_YEAR = 365 days; // Seconds in a year for annualized interest
     // Structs and mappings ------------------------------------------------------------------------
     struct borrower {
         uint256 borrowedAmount;
@@ -121,11 +123,27 @@ contract Bank is AccessControl {
         return borrowers[_borrower].borrowedAmount + _amount >= MAX_BORROW_AMOUNT;
     }
 
+    /**
+     * @param _borrower The address of the borrower.
+     * @return uint256 Returns the calculated interest for the borrower.
+     * @notice Function to calculate the interest for a borrower.
+     * @dev It calculates the interest based on the borrower's borrowed amount, interest rate, and time elapsed.
+     * @dev Uses basis points for precision (10000 basis points = 100%).
+     * @dev Interest is calculated as: (principal * rate * timeElapsed) / (BASIS_POINTS * SECONDS_IN_YEAR)
+     */
     function _calculateInterest(address _borrower) internal view returns (uint256) {
-        // Calculate the interest based on the amount and interest rate
-        uint256 amount = borrowers[_borrower].borrowedAmount;
+        uint256 principal = borrowers[_borrower].borrowedAmount;
         uint256 interestRate = borrowers[_borrower].interestRate;
-        return (amount * interestRate) / 100;
+        uint256 timeElapsed = block.timestamp - borrowers[_borrower].borrowAt;
+        
+        // Handle edge case where no time has passed
+        if (timeElapsed == 0 || principal == 0) {
+            return 0;
+        }
+        
+        // Calculate annualized interest with precision
+        // Formula: (principal * rate * timeElapsed) / (BASIS_POINTS * SECONDS_IN_YEAR)
+        return (principal * interestRate * timeElapsed) / (BASIS_POINTS * SECONDS_IN_YEAR);
     }
 
     /**
@@ -151,7 +169,7 @@ contract Bank is AccessControl {
         // Update the borrower's details
         borrowers[_borrower] = borrower({
             borrowedAmount: borrowers[_borrower].borrowedAmount + _amount,
-            interestRate: INTEREST_RATE,
+            interestRate: INTEREST_RATE, // basis points (500 = 5.00%)
             borrowAt: block.timestamp,
             dueDate: block.timestamp + 30 days
         });
@@ -190,4 +208,108 @@ contract Bank is AccessControl {
 
 
     // View functions ------------------------------------------------------------------------------
+    
+    /**
+     * @param _borrower The address of the borrower.
+     * @return borrowedAmount The amount borrowed by the borrower.
+     * @return interestRate The interest rate in basis points (10000 = 100%).
+     * @return borrowAt The timestamp when the loan was taken.
+     * @return dueDate The due date for loan repayment.
+     * @return currentInterest The current accrued interest.
+     * @return totalAmountDue The total amount due (principal + interest).
+     * @notice Function to get comprehensive borrower information.
+     */
+    function getBorrowerInfo(address _borrower) 
+        external 
+        view 
+        returns (
+            uint256 borrowedAmount,
+            uint256 interestRate,
+            uint256 borrowAt,
+            uint256 dueDate,
+            uint256 currentInterest,
+            uint256 totalAmountDue
+        ) 
+    {
+        borrower memory borrowerInfo = borrowers[_borrower];
+        currentInterest = _calculateInterest(_borrower);
+        
+        return (
+            borrowerInfo.borrowedAmount,
+            borrowerInfo.interestRate,
+            borrowerInfo.borrowAt,
+            borrowerInfo.dueDate,
+            currentInterest,
+            borrowerInfo.borrowedAmount + currentInterest
+        );
+    }
+
+    /**
+     * @param _borrower The address of the borrower.
+     * @param _timeElapsed Optional time elapsed in seconds. If 0, uses current time.
+     * @return interest The calculated interest for the given time period.
+     * @notice Function to preview interest calculation for a borrower.
+     * @dev Useful for front-end applications to show users expected interest.
+     */
+    function previewInterest(address _borrower, uint256 _timeElapsed) 
+        external 
+        view 
+        returns (uint256 interest) 
+    {
+        uint256 principal = borrowers[_borrower].borrowedAmount;
+        uint256 interestRate = borrowers[_borrower].interestRate;
+        uint256 borrowAt = borrowers[_borrower].borrowAt;
+        
+        if (principal == 0) {
+            return 0;
+        }
+        
+        uint256 timeToUse = _timeElapsed == 0 ? 
+            (block.timestamp > borrowAt ? block.timestamp - borrowAt : 0) : 
+            _timeElapsed;
+            
+        if (timeToUse == 0) {
+            return 0;
+        }
+        
+        return (principal * interestRate * timeToUse) / (BASIS_POINTS * SECONDS_IN_YEAR);
+    }
+
+    /**
+     * @param _principal The principal amount.
+     * @param _timeInDays The time period in days.
+     * @return interest The calculated interest for the given principal and time.
+     * @notice Function to calculate interest for any principal and time period.
+     * @dev Uses the contract's interest rate. Useful for front-end calculators.
+     */
+    function calculateInterestQuote(uint256 _principal, uint256 _timeInDays) 
+        external 
+        pure 
+        returns (uint256 interest) 
+    {
+        if (_principal == 0 || _timeInDays == 0) {
+            return 0;
+        }
+        
+        uint256 timeInSeconds = _timeInDays * 1 days;
+        return (_principal * INTEREST_RATE * timeInSeconds) / (BASIS_POINTS * SECONDS_IN_YEAR);
+    }
+
+    /**
+     * @return maxBorrowAmount The maximum amount that can be borrowed.
+     * @return interestRateBasisPoints The interest rate in basis points.
+     * @return basisPointsScale The scale used for basis points (10000).
+     * @notice Function to get contract constants for transparency.
+     */
+    function getContractConstants() 
+        external 
+        pure 
+        returns (
+            uint256 maxBorrowAmount,
+            uint256 interestRateBasisPoints,
+            uint256 basisPointsScale
+        ) 
+    {
+        return (MAX_BORROW_AMOUNT, INTEREST_RATE, BASIS_POINTS);
+    }
 }
