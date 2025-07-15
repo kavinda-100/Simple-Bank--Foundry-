@@ -9,7 +9,7 @@ This application is built using **Foundry Framework**.
 - [x] Deposit funds into an account
 - [x] Withdraw funds from an account
 - [x] Check account balance
-- [ ] Transfer funds between accounts
+- [x] Transfer funds between accounts
 - [ ] Borrow funds
 - [ ] Pay back borrowed funds
 
