@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+
 /**
  * @title BankAccount
  * @dev A simple contract that represents a bank account with the ability to deposit and withdraw funds.
@@ -8,7 +10,7 @@ pragma solidity ^0.8.24;
  * @notice This contract is for educational purposes only.
  * @notice this contract responsibilities to handle the deposit, withdrawal, transfer, getBalance, freeze, and activate account logics.
  */
-contract BankAccount {
+contract BankAccount is AccessControl {
     // Error messages -------------------------------------------------------------------------------------
     error BankAccount__InvalidAddress();
     error BankAccount__DepositAmountMustBeGreaterThanZero();
@@ -16,9 +18,12 @@ contract BankAccount {
     error BankAccount__AccountNotActive();
     error BankAccount__AccountAlreadyActive();
     error BankAccount__TransferFailed();
+    error BankAccount__UnAuthorized();
+
+    // Role Definitions --------------------------------------------------------------------------------
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     // State variables -------------------------------------------------------------------------------------
-    address private immutable i_deployer; // The address of the deployer
     // Mappings to store account information
     mapping(address owner => uint256 balance) private s_balances; // Mapping to store balances of each account
     mapping(address owner => bool isAccountActive) private s_accounts_active; // Mapping to check if an account is active
@@ -29,11 +34,6 @@ contract BankAccount {
     event AccountFrozen(address indexed owner); // Event emitted when an account is frozen
     event AccountActivated(address indexed owner); // Event emitted when an account is activated
     event Transfer(address indexed from, address indexed to, uint256 amount); // Event emitted when funds are transferred
-
-    // Constructor -----------------------------------------------------------------------------------------
-    constructor(address _deployer) {
-        i_deployer = _deployer;
-    }
 
     // Modifiers -----------------------------------------------------------------------------------------
 
@@ -52,14 +52,14 @@ contract BankAccount {
     }
 
     /**
-     * @param _deployer The address of the deployer to check
-     * @notice This modifier checks if the deployer address is calling the function
-     * @dev It reverts the transaction if the deployer address is invalid.
+     * @param _admin The address of the admin to check
+     * @notice This modifier checks if the admin address is calling the function
+     * @dev It reverts the transaction if the admin address is invalid.
      */
-    modifier onlyDeployer(address _deployer) {
-        // Check if the deployer address is valid
-        if(_deployer != i_deployer) {
-            revert BankAccount__InvalidAddress(); // Revert if the deployer is not the contract deployer
+    modifier onlyAdmin(address _admin) {
+        // Check if the admin address is valid
+        if(!hasRole(ADMIN_ROLE, _admin)) {
+            revert BankAccount__UnAuthorized(); // Revert if the admin is not the contract admin
         }
         _;
     }
@@ -98,21 +98,21 @@ contract BankAccount {
     }
 
     /**
-     * @param _deployer The address of the deployer to check
+     * @param _admin The address of the admin to check
      * @notice This function allows the caller to freeze their account.
      * @dev It sets the account's active status to false, preventing further transactions.
      */
-    function freezeAccount(address _deployer) external onlyDeployer(_deployer) {
+    function freezeAccount(address _admin) external onlyAdmin(_admin) {
         // Call the internal freeze account function
         _freezeAccount(msg.sender);
     }
 
     /**
-     * @param _deployer The address of the deployer to check
+     * @param _admin The address of the admin to check
      * @notice This function allows the caller to activate their account.
      * @dev It sets the account's active status to true, allowing transactions again.
      */
-    function activateAccount(address _deployer) external onlyDeployer(_deployer) {
+    function activateAccount(address _admin) external onlyAdmin(_admin) {
         // Call the internal activate account function
         _activateAccount(msg.sender);
     }
@@ -254,15 +254,5 @@ contract BankAccount {
     function isAccountActive(address _owner) external view returns (bool) {
         return _isAccountActive(_owner);
     }
-
-    /**
-     * @return The address of the deployer of the contract.
-     * @notice This function is external and can be called by anyone to get the deployer's address.
-     * @dev It returns the address of the deployer of the contract.
-     */
-    function getDeployer() external view returns (address) {
-        return i_deployer; // Return the deployer's address
-    }
-
 
 }

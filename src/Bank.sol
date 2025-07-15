@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IBankAccount} from "./interfaces/IBankAccount.sol";
 
 /**
@@ -9,7 +10,10 @@ import {IBankAccount} from "./interfaces/IBankAccount.sol";
  * @notice This contract is for educational purposes only.
  * @notice this contract responsibilities to handle the borrow and payback of funds logics.
  */
-contract Bank {
+contract Bank is AccessControl {
+
+    // Role Definitions --------------------------------------------------------------------------------
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     // state variables -----------------------------------------------------------------------------
     IBankAccount private immutable i_bankAccount; // Immutable variable to store the bank account contract address
@@ -34,6 +38,8 @@ contract Bank {
         i_bankAccount = IBankAccount(_bankAccount);
         // Set the owner of the bank contract to the deployer
         i_owner = msg.sender;
+        // Grant the deployer the admin role
+        grantRole(ADMIN_ROLE, msg.sender);
     }
 
     // Public . External functions ----------------------------------------------------------------
