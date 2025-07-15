@@ -40,7 +40,7 @@ contract BankAccount {
         _;
     }
 
-    // Public functions ------------------------------------------------------------------------------------
+    // Public / External functions ------------------------------------------------------------------------------------
 
     /**
      * @param _amount The amount to deposit into the account
@@ -60,6 +60,24 @@ contract BankAccount {
     function withdraw(uint256 _amount) external {
         // Call the internal withdraw function
         _withdraw(msg.sender, _amount);
+    }
+
+    /**
+     * @notice This function allows the caller to freeze their account.
+     * @dev It sets the account's active status to false, preventing further transactions.
+     */
+    function freezeAccount() external {
+        // Call the internal freeze account function
+        _freezeAccount(msg.sender);
+    }
+
+    /**
+     * @notice This function allows the caller to activate their account.
+     * @dev It sets the account's active status to true, allowing transactions again.
+     */
+    function activateAccount() external {
+        // Call the internal activate account function
+        _activateAccount(msg.sender);
     }
 
 
