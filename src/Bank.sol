@@ -71,6 +71,28 @@ contract Bank is AccessControl {
 
     // Internal functions --------------------------------------------------------------------------
 
+    /**
+     * @dev Internal function to check if the borrower is eligible to borrow.
+     * @param _borrower The address of the borrower.
+     * @return bool Returns true if the borrower is eligible, false otherwise.
+     */
+    function _isEligibleToBorrow(address _borrower) internal view returns (bool) {
+        // Check if the borrower has an active account and has not borrowed more than the maximum borrow amount
+        return i_bankAccount.isAccountActive(_borrower) && borrowers[_borrower].borrowedAmount < MAX_BORROW_AMOUNT;
+    }
+
+    /**
+     * @param _borrower The address of the borrower.
+     * @param _amount The amount to borrow.
+     * @notice Function to borrow funds from the Bank.
+     * @dev It checks if the borrower is eligible to borrow and updates the borrower's details
+     * accordingly. The borrower can borrow up to a maximum amount defined by MAX_BORROW_AMOUNT.
+     * The interest rate is set to INTEREST_RATE, and the due date is set to 30 days from the
+     * borrowing date.
+     * @dev It reverts if the borrower is not eligible or if the borrow amount exceeds
+     * the maximum borrow amount.
+     */
+
 
     // View functions ------------------------------------------------------------------------------
 }
