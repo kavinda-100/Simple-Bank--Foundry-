@@ -5,13 +5,13 @@ This application is built using **Foundry Framework**.
 
 ## Features
 
-- Create a new bank account
-- Deposit funds into an account
-- Withdraw funds from an account
-- Check account balance
-- Transfer funds between accounts
-- Borrow funds
-- Pay back borrowed funds
+- [x] Create a new bank account
+- [x] Deposit funds into an account
+- [x] Withdraw funds from an account
+- [x] Check account balance
+- [ ] Transfer funds between accounts
+- [ ] Borrow funds
+- [ ] Pay back borrowed funds
 
 ## Tools
 
