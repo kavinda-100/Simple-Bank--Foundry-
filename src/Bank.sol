@@ -12,7 +12,18 @@ import {IBankAccount} from "./interfaces/IBankAccount.sol";
 contract Bank {
 
     // state variables -----------------------------------------------------------------------------
-    IBankAccount private immutable i_bankAccount;
+    IBankAccount private immutable i_bankAccount; // Immutable variable to store the bank account contract address
+    address private immutable i_owner; // Immutable variable to store the owner of the bank contract
+    uint256 private constant MAX_BORROW_AMOUNT = 100 ether; // Maximum amount that can be borrowed
+    uint256 private constant INTEREST_RATE = 5; // Interest rate for borrowing, represented as a percentage
+    // Structs and mappings ------------------------------------------------------------------------
+    struct borrower {
+        uint256 borrowedAmount;
+        uint256 interestRate;
+        uint256 borrowAt;
+        uint256 dueDate;
+    } // Struct to hold borrower details
+    mapping(address => borrower) private borrowers; // Mapping to track borrowers and their details
 
     /**
      * @dev Constructor to initialize the bank account address.
@@ -21,5 +32,15 @@ contract Bank {
     constructor(address _bankAccount) {
         // Initialize the bank account address
         i_bankAccount = IBankAccount(_bankAccount);
+        // Set the owner of the bank contract to the deployer
+        i_owner = msg.sender;
     }
+
+    // Public . External functions ----------------------------------------------------------------
+
+
+    // Internal functions --------------------------------------------------------------------------
+
+
+    // View functions ------------------------------------------------------------------------------
 }
