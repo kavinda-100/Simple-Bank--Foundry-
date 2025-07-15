@@ -38,6 +38,30 @@ contract Bank {
 
     // Public . External functions ----------------------------------------------------------------
 
+    /**
+     * @param _amount The amount to deposit.
+     * @notice Function to deposit money to the Bank.
+     */
+    function deposit(uint256 _amount) external {
+        i_bankAccount.deposit(_amount);
+    }
+
+    /**
+     * @param _amount The amount to withdraw.
+     * @notice Function to withdraw money from the Bank.
+     */
+    function withdraw(uint256 _amount) external {
+        i_bankAccount.withdraw(_amount);
+    }
+
+    /**
+     * @param _to The address to transfer funds to.
+     * @param _amount The amount to transfer.
+     * @notice Function to transfer funds from the Bank.
+     */
+    function transferFunds(address _to, uint256 _amount) external {
+        i_bankAccount.transferFunds(_to, _amount);
+    }
 
     // Internal functions --------------------------------------------------------------------------
 
