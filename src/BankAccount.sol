@@ -85,6 +85,17 @@ contract BankAccount {
     }
 
     /**
+     * @param _to The address of the account to transfer funds to
+     * @param _amount The amount to transfer between accounts
+     * @notice This function allows the caller to transfer funds from their account to another account.
+     * @dev It checks if both accounts are active and if the balance is sufficient before proceeding with the transfer.
+     */
+    function transferFunds(address _to, uint256 _amount) external {
+        // Call the internal transfer funds function
+        _transferFunds(msg.sender, _to, _amount);
+    }
+
+    /**
      * @notice This function allows the caller to freeze their account.
      * @dev It sets the account's active status to false, preventing further transactions.
      */
