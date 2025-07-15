@@ -31,14 +31,19 @@ contract BankAccount {
         
     }
 
+    // Modifiers -----------------------------------------------------------------------------------------
+    modifier isValidAddress(address _user) {
+        // Check if the user address is valid
+        if(_user == address(0)) {
+            revert BankAccount__InvalidAddress(); // Revert if the user is the zero address
+        }
+        _;
+    }
+
 
     // Internal functions --------------------------------------------------------------------------------
 
-    function _deposit(address _owner, uint256 _amount) internal {
-        // check if _owner address is valid
-        if(_owner == address(0)) {
-            revert BankAccount__InvalidAddress(); // Revert if the owner is the zero address
-        }
+    function _deposit(address _owner, uint256 _amount) internal isValidAddress(_owner) {
         // Ensure the deposit amount is greater than zero
         if (_amount <= 0) {
             revert BankAccount__DepositAmountMustBeGreaterThanZero();
@@ -49,11 +54,7 @@ contract BankAccount {
         emit Deposit(_owner, _amount);
     }
 
-    function _withdraw(address _owner, uint256 _amount) internal {
-        // Check if _owner address is valid
-        if(_owner == address(0)) {
-            revert BankAccount__InvalidAddress(); // Revert if the owner is the zero address
-        }
+    function _withdraw(address _owner, uint256 _amount) internal isValidAddress(_owner) {
         // Ensure the account is active
         if (!_isAccountActive(_owner)) {
             revert BankAccount__AccountNotActive(); // Revert if the account is not active
@@ -79,10 +80,7 @@ contract BankAccount {
      * @return A boolean indicating whether the account is active or not.
      * @dev This function checks if the account is active.
      */
-    function _isAccountActive(address _owner) internal view returns (bool) {
-        if(_owner == address(0)) {
-            revert BankAccount__InvalidAddress(); // Revert if the owner is the zero address
-        }
+    function _isAccountActive(address _owner) internal isValidAddress(_owner) view returns (bool)  {
         return s_accounts_active[_owner]; // Check if the account is active
     }
 
@@ -92,11 +90,7 @@ contract BankAccount {
      * It can be used to prevent further transactions from the account.
      * @notice This function is internal and should be called with caution. NOTE: Freezing an account will prevent any deposits, withdrawals,  * or transfers. It is typically used for when user not payback their loan on time.
      */
-    function _freezeAccount(address _owner) internal {
-        // Check if the owner address is valid
-        if(_owner == address(0)) {
-            revert BankAccount__InvalidAddress(); // Revert if the owner is the zero address
-        }
+    function _freezeAccount(address _owner) internal isValidAddress(_owner) {
         // Ensure the account is currently active
         if (!_isAccountActive(_owner)) {
             revert BankAccount__AccountNotActive(); // Revert if the account is not active
@@ -113,11 +107,7 @@ contract BankAccount {
      * It can be used to allow transactions from the account again.
      * @notice This function is internal and should be called with caution.
      */
-    function _activateAccount(address _owner) internal {
-        // Check if the owner address is valid
-        if(_owner == address(0)) {
-            revert BankAccount__InvalidAddress(); // Revert if the owner is the zero address
-        }
+    function _activateAccount(address _owner) internal isValidAddress(_owner) {
         // Ensure the account is not already active
         if (_isAccountActive(_owner)) {
             revert BankAccount__AccountAlreadyActive(); // Revert if the account is already active
