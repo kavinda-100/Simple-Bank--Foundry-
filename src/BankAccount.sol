@@ -6,6 +6,7 @@ pragma solidity ^0.8.24;
  * @dev A simple contract that represents a bank account with the ability to deposit and withdraw funds.
  * @author kavinda rathnayake
  * @notice This contract is for educational purposes only.
+ * @notice this contract responsibilities to handle the deposit, withdrawal, transfer, getBalance, freeze, and activate account logics.
  */
 contract BankAccount {
     // Error messages -------------------------------------------------------------------------------------
