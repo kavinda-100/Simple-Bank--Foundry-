@@ -8,7 +8,7 @@ pragma solidity ^0.8.24;
  * @notice This contract is for educational purposes only.
  */
 contract BankAccount {
-    // Error messages
+    // Error messages -------------------------------------------------------------------------------------
     error BankAccount__InvalidAddress();
     error BankAccount__DepositAmountMustBeGreaterThanZero();
     error BankAccount__InsufficientBalance();
@@ -16,10 +16,17 @@ contract BankAccount {
     error BankAccount__AccountAlreadyActive();
     error BankAccount__TransferFailed();
 
-    // State variables
+    // State variables -------------------------------------------------------------------------------------
     mapping(address owner => uint256 balance) private s_balances; // Mapping to store balances of each account
     mapping(address owner => bool isAccountActive) private s_accounts_active; // Mapping to check if an account is active
 
+    // Events ---------------------------------------------------------------------------------------------
+    event Deposit(address indexed owner, uint256 amount); // Event emitted when a deposit is made
+    event Withdrawal(address indexed owner, uint256 amount); // Event emitted when a withdrawal is made
+    event AccountFrozen(address indexed owner); // Event emitted when an account is frozen
+    event AccountActivated(address indexed owner); // Event emitted when an account is activated
+
+    // Constructor -----------------------------------------------------------------------------------------
     constructor() {
         
     }
@@ -38,6 +45,8 @@ contract BankAccount {
         }
         // Deposit the amount into the account
         s_balances[_owner] += _amount;
+        // Emit a deposit event
+        emit Deposit(_owner, _amount);
     }
 
     function _withdraw(address _owner, uint256 _amount) internal {
@@ -61,7 +70,8 @@ contract BankAccount {
         if (!success) {
             revert BankAccount__TransferFailed(); // Revert if the transfer fails
         }
-
+        // Emit a withdrawal event
+        emit Withdrawal(_owner, _amount);
     }
 
     /**
@@ -93,6 +103,8 @@ contract BankAccount {
         }
         // Freeze the account
         s_accounts_active[_owner] = false; // Freeze account
+        // Emit an account frozen event
+        emit AccountFrozen(_owner); // Emit event indicating account is frozen
     }
 
     /**
@@ -112,6 +124,8 @@ contract BankAccount {
         }
         // Activate the account
         s_accounts_active[_owner] = true; // Activate account
+        // Emit an account activated event
+        emit AccountActivated(_owner); // Emit event indicating account is activated
     }
 
 
