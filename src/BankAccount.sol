@@ -14,6 +14,7 @@ contract BankAccount {
     error BankAccount__InsufficientBalance();
     error BankAccount__AccountNotActive();
     error BankAccount__AccountAlreadyActive();
+    error BankAccount__TransferFailed();
 
     // State variables
     mapping(address owner => uint256 balance) private s_balances; // Mapping to store balances of each account
@@ -26,24 +27,41 @@ contract BankAccount {
 
     // Internal functions --------------------------------------------------------------------------------
 
-    function _deposit(address owner, uint256 amount) internal {
-        // check if the account is active
-
+    function _deposit(address _owner, uint256 _amount) internal {
+        // check if _owner address is valid
+        if(_owner == address(0)) {
+            revert BankAccount__InvalidAddress(); // Revert if the owner is the zero address
+        }
         // Ensure the deposit amount is greater than zero
-        if (amount <= 0) {
+        if (_amount <= 0) {
             revert BankAccount__DepositAmountMustBeGreaterThanZero();
         }
-        s_balances[owner] += amount;
-        s_accounts_active[owner] = true; // Activate account on first deposit
+        // Deposit the amount into the account
+        s_balances[_owner] += _amount;
     }
 
-    function _withdraw(address owner, uint256 amount) internal {
-        require(s_accounts_active[owner], "Account is not active");
-        require(s_balances[owner] >= amount, "Insufficient balance");
-        s_balances[owner] -= amount;
-        if (s_balances[owner] == 0) {
-            s_accounts_active[owner] = false; // Deactivate account if balance is zero
+    function _withdraw(address _owner, uint256 _amount) internal {
+        // Check if _owner address is valid
+        if(_owner == address(0)) {
+            revert BankAccount__InvalidAddress(); // Revert if the owner is the zero address
         }
+        // Ensure the account is active
+        if (!_isAccountActive(_owner)) {
+            revert BankAccount__AccountNotActive(); // Revert if the account is not active
+        }
+        // Ensure the withdrawal amount does not exceed the balance
+        if (s_balances[_owner] < _amount) {
+            revert BankAccount__InsufficientBalance(); // Revert if insufficient balance
+        }
+        // Withdraw the amount from the account
+        s_balances[_owner] -= _amount;
+        // transfer the amount to the owner
+        (bool success, ) = payable(_owner).call{value: _amount}("");
+        // Check if the transfer was successful
+        if (!success) {
+            revert BankAccount__TransferFailed(); // Revert if the transfer fails
+        }
+
     }
 
     /**
@@ -62,7 +80,7 @@ contract BankAccount {
      * @param owner The address of the account owner to freeze
      * @dev This function freezes the account by setting its active status to false.
      * It can be used to prevent further transactions from the account.
-     * @notice This function is internal and should be called with caution.
+     * @notice This function is internal and should be called with caution. NOTE: Freezing an account will prevent any deposits, withdrawals,  * or transfers. It is typically used for when user not payback their loan on time.
      */
     function _freezeAccount(address owner) internal {
         // Check if the owner address is valid
