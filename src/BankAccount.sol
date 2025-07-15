@@ -17,6 +17,8 @@ contract BankAccount {
     error BankAccount__TransferFailed();
 
     // State variables -------------------------------------------------------------------------------------
+    address private immutable i_deployer; // The address of the deployer
+    // Mappings to store account information
     mapping(address owner => uint256 balance) private s_balances; // Mapping to store balances of each account
     mapping(address owner => bool isAccountActive) private s_accounts_active; // Mapping to check if an account is active
 
@@ -27,15 +29,34 @@ contract BankAccount {
     event AccountActivated(address indexed owner); // Event emitted when an account is activated
 
     // Constructor -----------------------------------------------------------------------------------------
-    constructor() {
-        
+    constructor(address _deployer) {
+        i_deployer = _deployer;
     }
 
     // Modifiers -----------------------------------------------------------------------------------------
+
+    /**
+     * @param _user The address of the user to check
+     * @notice This modifier checks if the user address is valid (not the zero address).
+     * @dev It reverts the transaction if the user address is invalid.
+     * @dev This modifier is used to ensure that the user address is valid before performing any operations on it.
+     */
     modifier isValidAddress(address _user) {
         // Check if the user address is valid
         if(_user == address(0)) {
             revert BankAccount__InvalidAddress(); // Revert if the user is the zero address
+        }
+        _;
+    }
+
+    /**
+     * @notice This modifier checks if the deployer address is calling the function
+     * @dev It reverts the transaction if the deployer address is invalid.
+     */
+    modifier onlyDeployer() {
+        // Check if the deployer address is valid
+        if(msg.sender != i_deployer) {
+            revert BankAccount__InvalidAddress(); // Revert if the deployer is not the contract deployer
         }
         _;
     }
@@ -66,7 +87,7 @@ contract BankAccount {
      * @notice This function allows the caller to freeze their account.
      * @dev It sets the account's active status to false, preventing further transactions.
      */
-    function freezeAccount() external {
+    function freezeAccount() external onlyDeployer {
         // Call the internal freeze account function
         _freezeAccount(msg.sender);
     }
@@ -75,7 +96,7 @@ contract BankAccount {
      * @notice This function allows the caller to activate their account.
      * @dev It sets the account's active status to true, allowing transactions again.
      */
-    function activateAccount() external {
+    function activateAccount() external onlyDeployer{
         // Call the internal activate account function
         _activateAccount(msg.sender);
     }
@@ -180,6 +201,15 @@ contract BankAccount {
      */
     function isAccountActive(address _owner) external view returns (bool) {
         return _isAccountActive(_owner);
+    }
+
+    /**
+     * @return The address of the deployer of the contract.
+     * @notice This function is external and can be called by anyone to get the deployer's address.
+     * @dev It returns the address of the deployer of the contract.
+     */
+    function getDeployer() external view returns (address) {
+        return i_deployer; // Return the deployer's address
     }
 
 
