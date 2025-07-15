@@ -51,12 +51,13 @@ contract BankAccount {
     }
 
     /**
+     * @param _deployer The address of the deployer to check
      * @notice This modifier checks if the deployer address is calling the function
      * @dev It reverts the transaction if the deployer address is invalid.
      */
-    modifier onlyDeployer() {
+    modifier onlyDeployer(address _deployer) {
         // Check if the deployer address is valid
-        if(msg.sender != i_deployer) {
+        if(_deployer != i_deployer) {
             revert BankAccount__InvalidAddress(); // Revert if the deployer is not the contract deployer
         }
         _;
@@ -96,19 +97,21 @@ contract BankAccount {
     }
 
     /**
+     * @param _deployer The address of the deployer to check
      * @notice This function allows the caller to freeze their account.
      * @dev It sets the account's active status to false, preventing further transactions.
      */
-    function freezeAccount() external onlyDeployer {
+    function freezeAccount(address _deployer) external onlyDeployer(_deployer) {
         // Call the internal freeze account function
         _freezeAccount(msg.sender);
     }
 
     /**
+     * @param _deployer The address of the deployer to check
      * @notice This function allows the caller to activate their account.
      * @dev It sets the account's active status to true, allowing transactions again.
      */
-    function activateAccount() external onlyDeployer{
+    function activateAccount(address _deployer) external onlyDeployer(_deployer) {
         // Call the internal activate account function
         _activateAccount(msg.sender);
     }
