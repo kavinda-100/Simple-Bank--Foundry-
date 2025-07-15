@@ -12,6 +12,18 @@ import {IBankAccount} from "./interfaces/IBankAccount.sol";
  */
 contract Bank is AccessControl {
 
+    // Custom Errors --------------------------------------------------------------------------------
+    error Bank__InvalidAddress();
+    error Bank__NotEligibleToBorrow();
+    error Bank__MaxBorrowAmountReached();
+    error Bank__AccountNotActive();
+    error Bank__DueDatePassed();
+    error Bank__TransferFailed();
+
+    // Events --------------------------------------------------------------------------------------
+    event Borrowed(address indexed borrower, uint256 amount, uint256 dueDate); // Event emitted when a user borrows funds
+    event PaidBack(address indexed borrower, uint256 amount); // Event emitted when a user pays back borrowed funds
+
     // Role Definitions --------------------------------------------------------------------------------
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
@@ -40,6 +52,22 @@ contract Bank is AccessControl {
         i_owner = msg.sender;
         // Grant the deployer the admin role
         grantRole(ADMIN_ROLE, msg.sender);
+    }
+
+    // Modifiers -----------------------------------------------------------------------------------------
+
+    /**
+     * @param _user The address of the user to check
+     * @notice This modifier checks if the user address is valid (not the zero address).
+     * @dev It reverts the transaction if the user address is invalid.
+     * @dev This modifier is used to ensure that the user address is valid before performing any operations on it.
+     */
+    modifier isValidAddress(address _user) {
+        // Check if the user address is valid
+        if(_user == address(0)) {
+            revert Bank__InvalidAddress(); // Revert if the user address is invalid
+        }
+        _;
     }
 
     // Public . External functions ----------------------------------------------------------------
@@ -78,7 +106,26 @@ contract Bank is AccessControl {
      */
     function _isEligibleToBorrow(address _borrower) internal view returns (bool) {
         // Check if the borrower has an active account and has not borrowed more than the maximum borrow amount
-        return i_bankAccount.isAccountActive(_borrower) && borrowers[_borrower].borrowedAmount < MAX_BORROW_AMOUNT;
+        return i_bankAccount.isAccountActive(_borrower) && borrowers[_borrower].borrowedAmount <= MAX_BORROW_AMOUNT;
+    }
+
+    /**
+     * @param _borrower The address of the borrower.
+     * @param _amount The amount to check.
+     * @return bool Returns true if the maximum borrow amount is reached, false otherwise.
+     * @notice Function to check if the borrower has reached the maximum borrow amount.
+     * @dev It checks if the borrower's current borrowed amount plus the new amount exceeds the maximum borrow amount.
+     */
+    function _isMaxBorrowAmountReached(address _borrower, uint256 _amount) internal view returns (bool) {
+        // Check if the borrower has reached the maximum borrow amount
+        return borrowers[_borrower].borrowedAmount + _amount >= MAX_BORROW_AMOUNT;
+    }
+
+    function _calculateInterest(address _borrower) internal view returns (uint256) {
+        // Calculate the interest based on the amount and interest rate
+        uint256 amount = borrowers[_borrower].borrowedAmount;
+        uint256 interestRate = borrowers[_borrower].interestRate;
+        return (amount * interestRate) / 100;
     }
 
     /**
@@ -92,6 +139,54 @@ contract Bank is AccessControl {
      * @dev It reverts if the borrower is not eligible or if the borrow amount exceeds
      * the maximum borrow amount.
      */
+    function _borrow(address _borrower, uint256 _amount) internal isValidAddress(_borrower) {
+        // Check if the borrower is eligible to borrow
+        if(!_isEligibleToBorrow(_borrower)) {
+            revert Bank__NotEligibleToBorrow(); // Revert if the borrower is not eligible
+        }
+        // Check if the maximum borrow amount is reached
+        if(_isMaxBorrowAmountReached(_borrower, _amount)) {
+            revert Bank__MaxBorrowAmountReached(); // Revert if the maximum borrow amount is reached
+        }
+        // Update the borrower's details
+        borrowers[_borrower] = borrower({
+            borrowedAmount: borrowers[_borrower].borrowedAmount + _amount,
+            interestRate: INTEREST_RATE,
+            borrowAt: block.timestamp,
+            dueDate: block.timestamp + 30 days
+        });
+        // Transfer the borrowed amount to the borrower
+        i_bankAccount.transferFunds(_borrower, _amount);
+        // Emit an event for borrowing
+        emit Borrowed(_borrower, _amount, borrowers[_borrower].dueDate);
+    }
+
+    /**
+     * @param _borrower The address of the borrower.
+     * @notice Function to pay back borrowed funds to the Bank.
+     * @dev It checks if the borrower has an active account and if the due date has not passed.
+     * If the due date has passed, it reverts the transaction.
+     */
+    function _payBack(address _borrower) internal isValidAddress(_borrower) {
+        // Check if the borrower has an active account
+        if(!i_bankAccount.isAccountActive(_borrower)) {
+            revert Bank__AccountNotActive(); // Revert if the account is not active
+        }
+        // Check if the due date has passed
+        if(block.timestamp > borrowers[_borrower].dueDate) {
+            revert Bank__DueDatePassed(); // Revert if the due date has passed
+        }
+        // Calculate the total amount to pay back (principal + interest)
+        uint256 totalAmount = borrowers[_borrower].borrowedAmount + _calculateInterest(_borrower);
+        // Transfer the total amount back to the bank
+        i_bankAccount.transferFunds(address(this), totalAmount);
+        // Update the borrower's details
+        borrowers[_borrower].borrowedAmount = 0;
+        borrowers[_borrower].interestRate = 0;
+        borrowers[_borrower].dueDate = 0;
+        // Emit an event for paying back
+        emit PaidBack(_borrower, totalAmount);
+    }
 
 
     // View functions ------------------------------------------------------------------------------
