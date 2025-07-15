@@ -21,7 +21,6 @@ This application is built using **Foundry Framework**.
 ## Project Structure
 
 ```
-.
 ├── src
 │   ├── Bank.sol
 │   └── BankAccount.sol
