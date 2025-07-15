@@ -40,6 +40,28 @@ contract BankAccount {
         _;
     }
 
+    // Public functions ------------------------------------------------------------------------------------
+
+    /**
+     * @param _amount The amount to deposit into the account
+     * @notice This function allows the caller to deposit funds into their account.
+     * @dev It checks if the amount is greater than zero before proceeding with the deposit.
+     */
+    function deposit(uint256 _amount) external {
+        // Call the internal deposit function
+        _deposit(msg.sender, _amount);
+    }
+
+    /**
+     * @param _amount The amount to withdraw from the account
+     * @notice This function allows the caller to withdraw funds from their account.
+     * @dev It checks if the account is active and if the balance is sufficient before proceeding with the withdrawal.
+     */
+    function withdraw(uint256 _amount) external {
+        // Call the internal withdraw function
+        _withdraw(msg.sender, _amount);
+    }
+
 
     // Internal functions --------------------------------------------------------------------------------
 
