@@ -27,6 +27,7 @@ contract BankAccount {
     event Withdrawal(address indexed owner, uint256 amount); // Event emitted when a withdrawal is made
     event AccountFrozen(address indexed owner); // Event emitted when an account is frozen
     event AccountActivated(address indexed owner); // Event emitted when an account is activated
+    event Transfer(address indexed from, address indexed to, uint256 amount); // Event emitted when funds are transferred
 
     // Constructor -----------------------------------------------------------------------------------------
     constructor(address _deployer) {
@@ -146,6 +147,30 @@ contract BankAccount {
         }
         // Emit a withdrawal event
         emit Withdrawal(_owner, _amount);
+    }
+
+    /**
+     * @param _from The address of the account owner to transfer funds from
+     * @param _to The address of the account owner to transfer funds to
+     * @param _amount The amount to transfer between accounts
+     * @dev This function transfers funds from one account to another.
+     * It checks if both accounts are active and if the balance is sufficient before proceeding with the transfer.
+     */
+    function _transferFunds(address _from, address _to, uint256 _amount) internal isValidAddress(_from) isValidAddress(_to) {
+        // Ensure the account is active
+        if (!_isAccountActive(_from)) {
+            revert BankAccount__AccountNotActive(); // Revert if the account is not active
+        }
+        // Ensure the withdrawal amount does not exceed the balance
+        if (s_balances[_from] < _amount) {
+            revert BankAccount__InsufficientBalance(); // Revert if insufficient balance
+        }
+        // Withdraw the amount from the sender's account
+        s_balances[_from] -= _amount;
+        // Deposit the amount into the recipient's account
+        s_balances[_to] += _amount;
+        // Emit a transfer event
+        emit Transfer(_from, _to, _amount); // Emit event indicating funds were transferred
     }
 
     /**
