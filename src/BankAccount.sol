@@ -104,6 +104,12 @@ contract BankAccount {
 
     // Internal functions --------------------------------------------------------------------------------
 
+    /**
+     * @param _owner The address of the account owner to deposit funds into
+     * @param _amount The amount to deposit into the account
+     * @dev This function deposits funds into the specified account.
+     * It checks if the amount is greater than zero before proceeding with the deposit.
+     */
     function _deposit(address _owner, uint256 _amount) internal isValidAddress(_owner) {
         // Ensure the deposit amount is greater than zero
         if (_amount <= 0) {
@@ -115,6 +121,12 @@ contract BankAccount {
         emit Deposit(_owner, _amount);
     }
 
+    /**
+     * @param _owner The address of the account owner to withdraw funds from
+     * @param _amount The amount to withdraw from the account
+     * @dev This function withdraws funds from the specified account.
+     * It checks if the account is active and if the balance is sufficient before proceeding with the withdrawal.
+     */
     function _withdraw(address _owner, uint256 _amount) internal isValidAddress(_owner) {
         // Ensure the account is active
         if (!_isAccountActive(_owner)) {
