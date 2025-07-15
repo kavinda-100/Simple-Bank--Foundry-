@@ -65,77 +65,77 @@ contract BankAccount {
     }
 
     /**
-     * @param owner The address of the account owner to check
+     * @param _owner The address of the account owner to check
      * @return A boolean indicating whether the account is active or not.
      * @dev This function checks if the account is active.
      */
-    function _isAccountActive(address owner) internal view returns (bool) {
-        if(owner == address(0)) {
+    function _isAccountActive(address _owner) internal view returns (bool) {
+        if(_owner == address(0)) {
             revert BankAccount__InvalidAddress(); // Revert if the owner is the zero address
         }
-        return s_accounts_active[owner]; // Check if the account is active
+        return s_accounts_active[_owner]; // Check if the account is active
     }
 
     /**
-     * @param owner The address of the account owner to freeze
+     * @param _owner The address of the account owner to freeze
      * @dev This function freezes the account by setting its active status to false.
      * It can be used to prevent further transactions from the account.
      * @notice This function is internal and should be called with caution. NOTE: Freezing an account will prevent any deposits, withdrawals,  * or transfers. It is typically used for when user not payback their loan on time.
      */
-    function _freezeAccount(address owner) internal {
+    function _freezeAccount(address _owner) internal {
         // Check if the owner address is valid
-        if(owner == address(0)) {
+        if(_owner == address(0)) {
             revert BankAccount__InvalidAddress(); // Revert if the owner is the zero address
         }
         // Ensure the account is currently active
-        if (!_isAccountActive(owner)) {
+        if (!_isAccountActive(_owner)) {
             revert BankAccount__AccountNotActive(); // Revert if the account is not active
         }
         // Freeze the account
-        s_accounts_active[owner] = false; // Freeze account
+        s_accounts_active[_owner] = false; // Freeze account
     }
 
     /**
-     * @param owner The address of the account owner to activate
+     * @param _owner The address of the account owner to activate
      * @dev This function activates the account by setting its active status to true.
      * It can be used to allow transactions from the account again.
      * @notice This function is internal and should be called with caution.
      */
-    function _activateAccount(address owner) internal {
+    function _activateAccount(address _owner) internal {
         // Check if the owner address is valid
-        if(owner == address(0)) {
+        if(_owner == address(0)) {
             revert BankAccount__InvalidAddress(); // Revert if the owner is the zero address
         }
         // Ensure the account is not already active
-        if (_isAccountActive(owner)) {
+        if (_isAccountActive(_owner)) {
             revert BankAccount__AccountAlreadyActive(); // Revert if the account is already active
         }
         // Activate the account
-        s_accounts_active[owner] = true; // Activate account
+        s_accounts_active[_owner] = true; // Activate account
     }
 
 
     // Getters -------------------------------------------------------------------------------------------------
 
     /**
-     * @param owner The address of the account owner whose balance is being queried
+     * @param _owner The address of the account owner whose balance is being queried
      * @return The balance of the specified account owner.
      * @notice This function is external and can be called by anyone to check the balance of an account.
      * @dev It returns the balance of the specified account owner.
      */
-    function getBalance(address owner) external view returns (uint256) {
-        return s_balances[owner];
+    function getBalance(address _owner) external view returns (uint256) {
+        return s_balances[_owner];
     }
 
 
     /**
-     * @param owner The address of the account owner to check
+     * @param _owner The address of the account owner to check
      * @return A boolean indicating whether the account is active or not.
      * @notice This function is external and can be called by anyone to check if an account is active.
      * @dev It returns true if the account is active, false otherwise.
      */
-    function isAccountActive(address owner) external view returns (bool) {
-        return _isAccountActive(owner);
+    function isAccountActive(address _owner) external view returns (bool) {
+        return _isAccountActive(_owner);
     }
 
 
