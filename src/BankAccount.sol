@@ -8,6 +8,12 @@ pragma solidity ^0.8.24;
  * @notice This contract is for educational purposes only.
  */
 contract BankAccount {
+    // Error messages
+    error BankAccount__InvalidAddress();
+    error BankAccount__DepositAmountMustBeGreaterThanZero();
+    error BankAccount__InsufficientBalance();
+    error BankAccount__AccountNotActive();
+    error BankAccount__AccountAlreadyActive();
 
     // State variables
     mapping(address owner => uint256 balance) private s_balances; // Mapping to store balances of each account
@@ -21,7 +27,12 @@ contract BankAccount {
     // Internal functions --------------------------------------------------------------------------------
 
     function _deposit(address owner, uint256 amount) internal {
-        require(amount > 0, "Deposit amount must be greater than zero");
+        // check if the account is active
+
+        // Ensure the deposit amount is greater than zero
+        if (amount <= 0) {
+            revert BankAccount__DepositAmountMustBeGreaterThanZero();
+        }
         s_balances[owner] += amount;
         s_accounts_active[owner] = true; // Activate account on first deposit
     }
@@ -36,13 +47,46 @@ contract BankAccount {
     }
 
     /**
+     * @param owner The address of the account owner to check
+     * @return A boolean indicating whether the account is active or not.
+     * @dev This function checks if the account is active.
+     */
+    function _isAccountActive(address owner) internal view returns (bool) {
+        if(owner == address(0)) {
+            revert BankAccount__InvalidAddress(); // Revert if the owner is the zero address
+        }
+        return s_accounts_active[owner]; // Check if the account is active
+    }
+
+    /**
      * @param owner The address of the account owner to freeze
      * @dev This function freezes the account by setting its active status to false.
      * It can be used to prevent further transactions from the account.
      * @notice This function is internal and should be called with caution.
      */
     function _freezeAccount(address owner) internal {
+        if(owner == address(0)) {
+            revert BankAccount__InvalidAddress(); // Revert if the owner is the zero address
+        }
         s_accounts_active[owner] = false; // Freeze account
+    }
+
+    /**
+     * @param owner The address of the account owner to activate
+     * @dev This function activates the account by setting its active status to true.
+     * It can be used to allow transactions from the account again.
+     * @notice This function is internal and should be called with caution.
+     */
+    function _activateAccount(address owner) internal {
+        if(owner == address(0)) {
+            revert BankAccount__InvalidAddress(); // Revert if the owner is the zero address
+        }
+        // Ensure the account is not already active
+        if (_isAccountActive(owner)) {
+            revert BankAccount__AccountAlreadyActive(); // Revert if the account is already active
+        }
+        // Activate the account
+        s_accounts_active[owner] = true; // Activate account
     }
 
 
@@ -57,7 +101,7 @@ contract BankAccount {
     function getBalance(address owner) external view returns (uint256) {
         return s_balances[owner];
     }
-    
+
 
     /**
      * @param owner The address of the account owner to check
@@ -66,7 +110,7 @@ contract BankAccount {
      * @dev It returns true if the account is active, false otherwise.
      */
     function isAccountActive(address owner) external view returns (bool) {
-        return s_accounts_active[owner];
+        return _isAccountActive(owner);
     }
 
 
