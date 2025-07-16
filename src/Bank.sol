@@ -122,7 +122,7 @@ contract Bank is AccessControl {
      * The borrower can borrow up to a maximum amount defined by MAX_BORROW_AMOUNT.
      * The interest rate is set to INTEREST_RATE, and the due date is set to 30 days from the borrowing date.
      */
-    function borrow(uint256 _amount) external isValidAddress(msg.sender) {
+    function borrow(uint256 _amount) external {
         // Call the internal borrow function
         _borrow(msg.sender, _amount);
     }
@@ -132,7 +132,7 @@ contract Bank is AccessControl {
      * @dev It checks if the borrower has an active account and if the due date has not passed.
      * If the due date has passed, it reverts the transaction.
      */
-    function payBack() external isValidAddress(msg.sender) payable {
+    function payBack() external payable {
         // Call the internal pay back function
         _payBack(msg.sender, msg.value);
 
