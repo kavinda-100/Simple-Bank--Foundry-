@@ -7,4 +7,5 @@ interface IBankAccount {
     function transferFunds(address _from, address _to, uint256 _amount) external;
     function getBalance(address _user) external view returns (uint256);
     function payLoan(address _borrower, uint256 _amount) external returns (bool);
+    function receiveLoan(address _borrower) external payable;
 }

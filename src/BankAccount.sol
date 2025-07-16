@@ -41,6 +41,7 @@ contract BankAccount is AccessControl {
     event Withdrawal(address indexed owner, uint256 amount); // Event emitted when a withdrawal is made
     event Transfer(address indexed from, address indexed to, uint256 amount); // Event emitted when funds are transferred
     event LoanPaid(address indexed borrower, uint256 amount); // Event emitted when a loan is paid
+    event LoanReceived(address indexed borrower, uint256 amount); // Event emitted when a loan is received
 
     // Modifiers -----------------------------------------------------------------------------------------
 
@@ -127,6 +128,15 @@ contract BankAccount is AccessControl {
         // emit an event indicating the loan payment
         emit LoanPaid(_borrower, _amount);
         return success;
+    }
+
+    function receiveLoan(address _borrower) external payable isValidAddress(_borrower) onlyAdmin {
+        // check if the borrower has an account
+        if(s_balances[_borrower] == 0) {
+            revert BankAccount__BorrowerDoesNotExist(); // Revert if the borrower does not exist
+        }
+        // Emit an event indicating the loan reception
+        emit LoanReceived(_borrower, msg.value);
     }
 
 

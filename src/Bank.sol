@@ -22,6 +22,7 @@ contract Bank is AccessControl {
     error Bank__TransferFailed();
     error Bank__UnAuthorized();
     error Bank__AccountAlreadyActive();
+    error Bank__AmountIsInsufficient();
 
     // Events --------------------------------------------------------------------------------------
     event Borrowed(address indexed borrower, uint256 amount, uint256 dueDate); // Event emitted when a user borrows funds
@@ -113,6 +114,28 @@ contract Bank is AccessControl {
      */
     function transferFunds(address _to, uint256 _amount) external {
         i_bankAccount.transferFunds(msg.sender, _to, _amount);
+    }
+
+    /**
+     * @notice This function allows a user to borrow funds from the Bank.
+     * @dev It checks if the borrower is eligible to borrow and updates the borrower's details accordingly.
+     * The borrower can borrow up to a maximum amount defined by MAX_BORROW_AMOUNT.
+     * The interest rate is set to INTEREST_RATE, and the due date is set to 30 days from the borrowing date.
+     */
+    function borrow(uint256 _amount) external isValidAddress(msg.sender) {
+        // Call the internal borrow function
+        _borrow(msg.sender, _amount);
+    }
+
+    /**
+     * @notice This function allows a user to pay back borrowed funds.
+     * @dev It checks if the borrower has an active account and if the due date has not passed.
+     * If the due date has passed, it reverts the transaction.
+     */
+    function payBack() external isValidAddress(msg.sender) payable {
+        // Call the internal pay back function
+        _payBack(msg.sender, msg.value);
+
     }
 
     /**
@@ -265,11 +288,23 @@ contract Bank is AccessControl {
 
     /**
      * @param _borrower The address of the borrower.
+     * @return uint256 Returns the total amount that has to be paid back (principal + interest).
+     * @notice Function to get how much has to be paid back by the borrower.
+     * @dev It calculates the total amount to be paid back, including the principal and interest.
+     */
+    function getHowMuchHasToBePaid(address _borrower) external view returns (uint256) {
+        // Calculate the total amount to be paid (principal + interest)
+        uint256 totalAmount = borrowers[_borrower].borrowedAmount + _calculateInterest(_borrower);
+        return totalAmount;
+    }
+
+    /**
+     * @param _borrower The address of the borrower.
      * @notice Function to pay back borrowed funds to the Bank.
      * @dev It checks if the borrower has an active account and if the due date has not passed.
      * If the due date has passed, it reverts the transaction.
      */
-    function _payBack(address _borrower) internal isValidAddress(_borrower) {
+    function _payBack(address _borrower, uint256 _amount) internal isValidAddress(_borrower) {
         // Check if the borrower has an active account
         if(!_isAccountActive(_borrower)) {
             revert Bank__AccountNotActive(); // Revert if the account is not active
@@ -280,8 +315,12 @@ contract Bank is AccessControl {
         }
         // Calculate the total amount to pay back (principal + interest)
         uint256 totalAmount = borrowers[_borrower].borrowedAmount + _calculateInterest(_borrower);
+        // Check if the amount to pay back is not equal to the total amount
+        if(_amount != totalAmount) {
+            revert Bank__AmountIsInsufficient(); // Revert if the amount to pay back is less than the total amount
+        }
         // Transfer the total amount back to the bank
-        i_bankAccount.transferFunds(_borrower, address(i_bankAccount), totalAmount); // TODO: check if this is correct Need Improvement
+        i_bankAccount.receiveLoan{value: _amount}(_borrower);
         // Update the borrower's details
         borrowers[_borrower].borrowedAmount = 0;
         borrowers[_borrower].interestRate = 0;
