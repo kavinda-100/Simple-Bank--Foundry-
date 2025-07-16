@@ -14,6 +14,8 @@ contract EthHandlingTest is Test {
     // Contracts to test
     Bank public bank;
     BankAccount public bankAccount;
+    address public bankAccountDeployer;
+    address public bankDeployer;
     
     // Addresses for test users
     address public user1 = address(0x123);
@@ -27,12 +29,10 @@ contract EthHandlingTest is Test {
     function setUp() public {
         // Deploy BankAccount using deployment script
         DeployBankAccount deployBankAccountScript = new DeployBankAccount();
-        address bankAccountDeployer;
         (bankAccount, bankAccountDeployer) = deployBankAccountScript.run();
 
         // Deploy Bank using deployment script
         DeployBank deployBankScript = new DeployBank();
-        address bankDeployer;
         (bank, bankDeployer) = deployBankScript.run(address(bankAccount));
         
         // Give test users some ETH to work with
@@ -378,4 +378,28 @@ contract EthHandlingTest is Test {
 
         vm.stopPrank();
     }
+
+    // ============================== Tests for view functions =========================================
+    /**
+     * @dev Test to verify getBalance returns correct balance for user
+     */
+    function test_GetBalance() public {
+        console.log("=== Get Balance Test ===");
+
+        vm.startPrank(user1);
+
+        uint256 depositAmount = 2 ether;
+
+        // Deposit ETH to get balance
+        bank.deposit{value: depositAmount}();
+
+        // Check balance
+        uint256 balance = bankAccount.getBalance(user1);
+        console.log("User1 balance:", balance);
+
+        assertEq(balance, depositAmount, "GetBalance return expected amount");
+
+        vm.stopPrank();
+    }
+    
 }
