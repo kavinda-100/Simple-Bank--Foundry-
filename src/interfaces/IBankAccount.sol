@@ -5,5 +5,5 @@ interface IBankAccount {
     function deposit(address _user) external payable;
     function withdraw(address _user, uint256 _amount) external;
     function transferFunds(address _from, address _to, uint256 _amount) external;
-    function getBalance(address _owner) external view returns (uint256);
+    function getBalance(address _user) external view returns (uint256);
 }

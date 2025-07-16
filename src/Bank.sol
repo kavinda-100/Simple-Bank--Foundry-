@@ -287,6 +287,17 @@ contract Bank is AccessControl {
 
 
     // View functions ------------------------------------------------------------------------------
+
+    /**
+     * @param _user The address of the account owner to get the balance of
+     * @return The balance of the owner in the bank account.
+     * @notice This function is external and can be called by anyone to get the balance of an account.
+     * @dev It calls the bank account contract to get the balance of the owner.
+     */
+    function getBalance(address _user) external view returns (uint256) {
+        // Call the bank account contract to get the balance of the user
+        return i_bankAccount.getBalance(_user);
+    }
     
     /**
      * @return The owner of the bank contract.
