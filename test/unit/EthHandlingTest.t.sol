@@ -21,6 +21,8 @@ contract EthHandlingTest is Test {
 
     // Events ---------------------------------------------------------------------------------------------
     event Deposit(address indexed owner, uint256 amount); // Event emitted when a deposit is made
+    event Withdrawal(address indexed owner, uint256 amount); // Event emitted when a withdrawal is made
+    event Transfer(address indexed from, address indexed to, uint256 amount); // Event emitted when funds are transferred
     
     function setUp() public {
         // Deploy BankAccount using deployment script
@@ -211,6 +213,30 @@ contract EthHandlingTest is Test {
         
         // Attempt to withdraw more than deposited amount
         bankAccount.withdraw(1 ether);
+        
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test to verify Withdrawal event is emitted when withdrawing ETH
+     */
+    function test_WithdrawalEventEmitted() public {
+        console.log("=== Withdrawal Event Emitted Test ===");
+        
+        vm.startPrank(user1);
+        
+        uint256 depositAmount = 1 ether;
+        uint256 withdrawAmount = 0.5 ether;
+
+        // Deposit ETH to withdraw later
+        bankAccount.deposit{value: depositAmount}(user1);
+
+        // Expect Withdrawal event to be emitted
+        vm.expectEmit(true, false, false, true);
+        emit Withdrawal(user1, withdrawAmount);
+        
+        // Withdraw ETH from BankAccount
+        bankAccount.withdraw(withdrawAmount);
         
         vm.stopPrank();
     }
