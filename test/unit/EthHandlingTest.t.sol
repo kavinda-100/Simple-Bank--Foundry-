@@ -37,7 +37,9 @@ contract EthHandlingTest is Test {
         vm.deal(user1, 10 ether);
         vm.deal(user2, 10 ether);
     }
-    
+
+    // ============================== Tests for Deposit Functionality =========================================
+
     /**
      * @dev Test to verify ETH deposit directly to BankAccount
      */
@@ -136,6 +138,26 @@ contract EthHandlingTest is Test {
         
         vm.stopPrank();
     }
-    
-   
+
+    /**
+     * @dev Test to verify user address is valid when depositing ETH
+     */
+    function test_ValidUserAddressOnDeposit() public {
+        console.log("=== Valid User Address on Deposit Test ===");
+        
+        vm.startPrank(user1);
+        
+        uint256 depositAmount = 1 ether;
+        
+        // Expect revert if user address is zero
+        vm.expectRevert(BankAccount.BankAccount__InvalidAddress.selector);
+        
+        // Attempt to deposit with zero address
+        bankAccount.deposit{value: depositAmount}(address(0));
+        
+        vm.stopPrank();
+    }
+
+    // ============================== Tests for Withdraw Functionality =========================================
+
 }
