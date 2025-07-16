@@ -198,4 +198,21 @@ contract EthHandlingTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * @dev Test to verify withdrawal reverts if insufficient balance
+     */
+    function test_WithdrawInsufficientBalanceReverts() public {
+        console.log("=== Withdraw Insufficient Balance Reverts Test ===");
+        
+        vm.startPrank(user1);
+        
+        // Expect revert if trying to withdraw more than balance (this user has no balance yet)
+        vm.expectRevert(BankAccount.BankAccount__InsufficientBalance.selector);
+        
+        // Attempt to withdraw more than deposited amount
+        bankAccount.withdraw(1 ether);
+        
+        vm.stopPrank();
+    }
+
 }
