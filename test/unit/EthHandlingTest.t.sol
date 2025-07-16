@@ -160,4 +160,42 @@ contract EthHandlingTest is Test {
 
     // ============================== Tests for Withdraw Functionality =========================================
 
+    /**
+     * @dev Test to verify ETH withdrawal from BankAccount
+     */
+    function test_WithdrawEthFromBankAccount() public {
+        console.log("=== Withdraw ETH from BankAccount Test ===");
+        vm.startPrank(user1);
+        uint256 depositAmount = 2 ether;
+        uint256 withdrawAmount = 1 ether;
+
+        // Deposit ETH to withdraw later
+        bankAccount.deposit{value: depositAmount}(user1);
+
+        // Check initial balances
+        console.log("Before withdrawal: ===================");
+        console.log("User1 balance:", user1.balance);
+        console.log("User1 account balance:", bankAccount.getBalance(user1));
+        console.log("BankAccount contract balance:", address(bankAccount).balance);
+        console.log("Bank contract balance:", address(bank).balance);
+
+        // Withdraw ETH from BankAccount
+        bankAccount.withdraw(withdrawAmount);
+
+        // Check final balances
+        console.log("After withdrawal: ===================");
+        console.log("User1 balance:", user1.balance);
+        console.log("User1 account balance:", bankAccount.getBalance(user1));
+        console.log("BankAccount contract balance:", address(bankAccount).balance);
+        console.log("Bank contract balance:", address(bank).balance);
+
+        // Check user's account balance decreased
+        assertEq(bankAccount.getBalance(user1), depositAmount - withdrawAmount);
+
+        // Check BankAccount contract balance decreased
+        assertEq(address(bankAccount).balance, depositAmount - withdrawAmount);
+
+        vm.stopPrank();
+    }
+
 }
