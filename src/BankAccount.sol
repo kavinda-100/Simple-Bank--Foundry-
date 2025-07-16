@@ -16,6 +16,9 @@ contract BankAccount is AccessControl {
     error BankAccount__DepositAmountMustBeGreaterThanZero();
     error BankAccount__InsufficientBalance();
     error BankAccount__TransferFailed();
+    error BankAccount__LoanAmountMustBeGreaterThanZero();
+    error BankAccount__UnAuthorized();
+    error BankAccount__BorrowerDoesNotExist();
     
 
     // State variables -------------------------------------------------------------------------------------
@@ -37,6 +40,7 @@ contract BankAccount is AccessControl {
     event Deposit(address indexed owner, uint256 amount); // Event emitted when a deposit is made
     event Withdrawal(address indexed owner, uint256 amount); // Event emitted when a withdrawal is made
     event Transfer(address indexed from, address indexed to, uint256 amount); // Event emitted when funds are transferred
+    event LoanPaid(address indexed borrower, uint256 amount); // Event emitted when a loan is paid
 
     // Modifiers -----------------------------------------------------------------------------------------
 
@@ -50,6 +54,18 @@ contract BankAccount is AccessControl {
         // Check if the user address is valid
         if(_user == address(0)) {
             revert BankAccount__InvalidAddress(); // Revert if the user is the zero address
+        }
+        _;
+    }
+
+    /**
+     * @notice This modifier checks if the caller has the admin role
+     * @dev It reverts the transaction if the caller doesn't have admin privileges
+     */
+    modifier onlyAdmin() {
+        // Check if the caller has the admin role
+        if(!hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+            revert BankAccount__UnAuthorized(); // Revert if the caller is not an admin
         }
         _;
     }
@@ -84,6 +100,33 @@ contract BankAccount is AccessControl {
     function transferFunds(address _from, address _to, uint256 _amount) external {
         // Call the internal transfer funds function
         _transferFunds(_from, _to, _amount);
+    }
+
+    /**
+     * @param _borrower The address of the borrower to pay the loan
+     * @param _amount The amount to pay towards the loan
+     * @notice This function allows the caller to pay a loan for a borrower.
+     * @dev It checks if the amount is greater than zero and if the contract has sufficient balance before proceeding with the payment.
+     */
+    function payLoan(address _borrower, uint256 _amount) external  isValidAddress(_borrower) onlyAdmin returns (bool) {
+        // Ensure the amount is greater than zero
+        if (_amount <= 0) {
+            revert BankAccount__LoanAmountMustBeGreaterThanZero(); // Revert if the amount is zero or negative
+        }
+        // Ensure the contract has sufficient balance
+        if(address(this).balance < _amount) {
+            revert BankAccount__InsufficientBalance(); // Revert if the contract has insufficient balance
+        }
+        // check if the borrower has an account
+        if(s_balances[_borrower] == 0) {
+            revert BankAccount__BorrowerDoesNotExist(); // Revert if the borrower does not exist
+        }
+        // Withdraw the amount from the borrower's account
+        (bool success, ) = payable(_borrower).call{value: _amount}("");
+        // success is checked by Bank contract
+        // emit an event indicating the loan payment
+        emit LoanPaid(_borrower, _amount);
+        return success;
     }
 
 

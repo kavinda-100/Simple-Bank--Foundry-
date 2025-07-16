@@ -253,7 +253,12 @@ contract Bank is AccessControl {
             dueDate: block.timestamp + 30 days
         });
         // Transfer the borrowed amount to the borrower
-        i_bankAccount.transferFunds(address(i_bankAccount), _borrower, _amount);
+        // i_bankAccount.transferFunds(address(i_bankAccount), _borrower, _amount);
+        bool success = i_bankAccount.payLoan(_borrower, _amount); // TODO: check if this is correct Need Improvement
+        // Check if the transfer was successful
+        if (!success) {
+            revert Bank__TransferFailed(); // Revert if the transfer fails
+        }
         // Emit an event for borrowing
         emit Borrowed(_borrower, _amount, borrowers[_borrower].dueDate);
     }
@@ -276,7 +281,7 @@ contract Bank is AccessControl {
         // Calculate the total amount to pay back (principal + interest)
         uint256 totalAmount = borrowers[_borrower].borrowedAmount + _calculateInterest(_borrower);
         // Transfer the total amount back to the bank
-        i_bankAccount.transferFunds(_borrower, address(i_bankAccount), totalAmount);
+        i_bankAccount.transferFunds(_borrower, address(i_bankAccount), totalAmount); // TODO: check if this is correct Need Improvement
         // Update the borrower's details
         borrowers[_borrower].borrowedAmount = 0;
         borrowers[_borrower].interestRate = 0;
