@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 interface IBankAccount {
-    function deposit(uint256 _amount) external;
+    function deposit(address _user) external payable;
     function withdraw(uint256 _amount) external;
     function transferFunds(address _to, uint256 _amount) external;
     function freezeAccount(address _account) external;

@@ -70,19 +70,19 @@ contract Bank is AccessControl {
         _;
     }
 
-    // Public . External functions ----------------------------------------------------------------
+    // Public / External functions ----------------------------------------------------------------
 
     /**
-     * @param _amount The amount to deposit.
-     * @notice Function to deposit money to the Bank.
+     * @notice Function to deposit ETH to the Bank.
+     * @dev User sends ETH and Bank forwards it to BankAccount on behalf of the user.
      */
-    function deposit(uint256 _amount) external {
-        i_bankAccount.deposit(_amount);
+    function deposit() external payable {
+        i_bankAccount.deposit{value: msg.value}(msg.sender);
     }
 
     /**
      * @param _amount The amount to withdraw.
-     * @notice Function to withdraw money from the Bank.
+     * @notice Function to withdraw ETH from the Bank.
      */
     function withdraw(uint256 _amount) external {
         i_bankAccount.withdraw(_amount);
@@ -91,7 +91,8 @@ contract Bank is AccessControl {
     /**
      * @param _to The address to transfer funds to.
      * @param _amount The amount to transfer.
-     * @notice Function to transfer funds from the Bank.
+     * @notice Function to transfer funds between accounts in the Bank.
+     * @dev This only updates balances, no actual ETH is moved.
      */
     function transferFunds(address _to, uint256 _amount) external {
         i_bankAccount.transferFunds(_to, _amount);
@@ -356,4 +357,11 @@ contract Bank is AccessControl {
     function adminRole() external pure returns (bytes32) {
         return DEFAULT_ADMIN_ROLE; // Return the admin role identifier
     }
+
+    // Fallback/Receive functions to handle ETH transfers
+    receive() external payable {
+        // Bank can receive ETH to forward to BankAccount
+    }
+
+    // Functions --------------------------------------------------------------------------------
 }
