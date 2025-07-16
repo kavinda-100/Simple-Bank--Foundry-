@@ -70,9 +70,9 @@ contract BankAccount is AccessControl {
      * @notice This function allows the caller to withdraw funds from their account.
      * @dev It checks if the account is active and if the balance is sufficient before proceeding with the withdrawal.
      */
-    function withdraw(uint256 _amount) external {
+    function withdraw(address _user,uint256 _amount) external {
         // Call the internal withdraw function
-        _withdraw(msg.sender, _amount);
+        _withdraw(_user, _amount);
     }
 
     /**
@@ -81,9 +81,9 @@ contract BankAccount is AccessControl {
      * @notice This function allows the caller to transfer funds from their account to another account.
      * @dev It checks if both accounts are active and if the balance is sufficient before proceeding with the transfer.
      */
-    function transferFunds(address _to, uint256 _amount) external {
+    function transferFunds(address _from, address _to, uint256 _amount) external {
         // Call the internal transfer funds function
-        _transferFunds(msg.sender, _to, _amount);
+        _transferFunds(_from, _to, _amount);
     }
 
 

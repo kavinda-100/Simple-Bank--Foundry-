@@ -102,7 +102,7 @@ contract Bank is AccessControl {
      * @notice Function to withdraw ETH from the Bank.
      */
     function withdraw(uint256 _amount) external {
-        i_bankAccount.withdraw(_amount);
+        i_bankAccount.withdraw(msg.sender, _amount);
     }
 
     /**
@@ -112,7 +112,7 @@ contract Bank is AccessControl {
      * @dev This only updates balances, no actual ETH is moved.
      */
     function transferFunds(address _to, uint256 _amount) external {
-        i_bankAccount.transferFunds(_to, _amount);
+        i_bankAccount.transferFunds(msg.sender, _to, _amount);
     }
 
     /**
@@ -187,7 +187,7 @@ contract Bank is AccessControl {
      */
     function _isEligibleToBorrow(address _borrower) internal view returns (bool) {
         // Check if the borrower has an active account and has not borrowed more than the maximum borrow amount
-        return i_bankAccount.isAccountActive(_borrower) && borrowers[_borrower].borrowedAmount <= MAX_BORROW_AMOUNT;
+        return _isAccountActive(_borrower) && borrowers[_borrower].borrowedAmount <= MAX_BORROW_AMOUNT;
     }
 
     /**
@@ -253,7 +253,7 @@ contract Bank is AccessControl {
             dueDate: block.timestamp + 30 days
         });
         // Transfer the borrowed amount to the borrower
-        i_bankAccount.transferFunds(_borrower, _amount);
+        i_bankAccount.transferFunds(address(i_bankAccount), _borrower, _amount);
         // Emit an event for borrowing
         emit Borrowed(_borrower, _amount, borrowers[_borrower].dueDate);
     }
@@ -266,7 +266,7 @@ contract Bank is AccessControl {
      */
     function _payBack(address _borrower) internal isValidAddress(_borrower) {
         // Check if the borrower has an active account
-        if(!i_bankAccount.isAccountActive(_borrower)) {
+        if(!_isAccountActive(_borrower)) {
             revert Bank__AccountNotActive(); // Revert if the account is not active
         }
         // Check if the due date has passed
@@ -276,7 +276,7 @@ contract Bank is AccessControl {
         // Calculate the total amount to pay back (principal + interest)
         uint256 totalAmount = borrowers[_borrower].borrowedAmount + _calculateInterest(_borrower);
         // Transfer the total amount back to the bank
-        i_bankAccount.transferFunds(address(this), totalAmount);
+        i_bankAccount.transferFunds(_borrower, address(i_bankAccount), totalAmount);
         // Update the borrower's details
         borrowers[_borrower].borrowedAmount = 0;
         borrowers[_borrower].interestRate = 0;
