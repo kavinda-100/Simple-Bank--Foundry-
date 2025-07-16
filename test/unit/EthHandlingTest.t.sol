@@ -241,6 +241,25 @@ contract EthHandlingTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * @dev Test to verify user address is valid when withdrawing ETH
+     */
+    function test_ValidUserAddressOnWithdraw() public {
+        console.log("=== Valid User Address on Withdraw Test ===");
+
+        vm.startPrank(user1);
+        
+        uint256 depositAmount = 1 ether;
+        
+        // Expect revert if user address is zero
+        vm.expectRevert(BankAccount.BankAccount__InvalidAddress.selector);
+
+        // Attempt to withdraw with zero address
+        bankAccount.withdraw(address(0), depositAmount);
+        
+        vm.stopPrank();
+    }
+
     // ============================== Tests for Transfer funds Functionality =========================================
 
     /**
@@ -295,6 +314,68 @@ contract EthHandlingTest is Test {
         // Attempt to transfer more than deposited amount
         bank.transferFunds(user2, 1 ether);
         
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test to verify Transfer event is emitted when transferring funds
+     */
+    function test_TransferEventEmitted() public {
+        console.log("=== Transfer Event Emitted Test ===");
+
+        vm.startPrank(user1);
+
+        uint256 depositAmount = 2 ether;
+        uint256 transferAmount = 1 ether;
+
+        // Deposit ETH to transfer later
+        bank.deposit{value: depositAmount}();
+
+        // Expect Transfer event to be emitted
+        vm.expectEmit(true, true, false, true);
+        emit Transfer(user1, user2, transferAmount);
+
+        // Attempt to transfer funds
+        bankAccount.transferFunds(user1, user2, transferAmount);
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test to verify user address is valid when transferring ETH
+     */
+    function test_ValidUserAddressOnTransfer() public {
+        console.log("=== Valid User Address on Transfer Test ===");
+
+        vm.startPrank(user1);
+
+        uint256 transferAmount = 1 ether;
+
+        // Expect revert if user address is zero
+        vm.expectRevert(BankAccount.BankAccount__InvalidAddress.selector);
+
+        // Attempt to transfer with zero address
+        bankAccount.transferFunds(address(0), user2, transferAmount);
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test to verify user address is valid when transferring ETH
+     */
+    function test_ValidUserAddressOnTransferBySecondUser() public {
+        console.log("=== Valid User Address on Transfer Test ===");
+
+        vm.startPrank(user1);
+
+        uint256 transferAmount = 1 ether;
+
+        // Expect revert if user address is zero
+        vm.expectRevert(BankAccount.BankAccount__InvalidAddress.selector);
+
+        // Attempt to transfer with zero address
+        bankAccount.transferFunds(user1, address(0), transferAmount);
+
         vm.stopPrank();
     }
 }
