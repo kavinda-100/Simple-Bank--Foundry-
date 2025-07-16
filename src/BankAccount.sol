@@ -20,13 +20,21 @@ contract BankAccount is AccessControl {
     error BankAccount__TransferFailed();
     error BankAccount__UnAuthorized();
 
-    // Role Definitions --------------------------------------------------------------------------------
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-
     // State variables -------------------------------------------------------------------------------------
+    address private immutable i_owner; // Immutable variable to store the owner of the bankAccount contract
     // Mappings to store account information
     mapping(address owner => uint256 balance) private s_balances; // Mapping to store balances of each account
     mapping(address owner => bool isAccountActive) private s_accounts_active; // Mapping to check if an account is active
+
+    /**
+     * @dev Constructor to set up initial roles
+     */
+    constructor() {
+        // Set the owner of the bankAccount contract to the deployer
+        i_owner = msg.sender;
+        // Grant the deployer the default admin role: it will be able to grant and revoke any roles
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
 
     // Events ---------------------------------------------------------------------------------------------
     event Deposit(address indexed owner, uint256 amount); // Event emitted when a deposit is made
@@ -52,14 +60,13 @@ contract BankAccount is AccessControl {
     }
 
     /**
-     * @param _admin The address of the admin to check
-     * @notice This modifier checks if the admin address is calling the function
-     * @dev It reverts the transaction if the admin address is invalid.
+     * @notice This modifier checks if the caller has the admin role
+     * @dev It reverts the transaction if the caller doesn't have admin privileges
      */
-    modifier onlyAdmin(address _admin) {
-        // Check if the admin address is valid
-        if(!hasRole(ADMIN_ROLE, _admin)) {
-            revert BankAccount__UnAuthorized(); // Revert if the admin is not the contract admin
+    modifier onlyAdmin() {
+        // Check if the caller has the admin role
+        if(!hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+            revert BankAccount__UnAuthorized(); // Revert if the caller is not an admin
         }
         _;
     }
@@ -98,23 +105,23 @@ contract BankAccount is AccessControl {
     }
 
     /**
-     * @param _admin The address of the admin to check
-     * @notice This function allows the caller to freeze their account.
+     * @notice This function allows an admin to freeze an account.
      * @dev It sets the account's active status to false, preventing further transactions.
+     * @dev Only addresses with ADMIN_ROLE can call this function.
      */
-    function freezeAccount(address _admin) external onlyAdmin(_admin) {
+    function freezeAccount(address _account) external onlyAdmin {
         // Call the internal freeze account function
-        _freezeAccount(msg.sender);
+        _freezeAccount(_account);
     }
 
     /**
-     * @param _admin The address of the admin to check
-     * @notice This function allows the caller to activate their account.
+     * @notice This function allows an admin to activate an account.
      * @dev It sets the account's active status to true, allowing transactions again.
+     * @dev Only addresses with ADMIN_ROLE can call this function.
      */
-    function activateAccount(address _admin) external onlyAdmin(_admin) {
+    function activateAccount(address _account) external onlyAdmin {
         // Call the internal activate account function
-        _activateAccount(msg.sender);
+        _activateAccount(_account);
     }
 
 
@@ -253,6 +260,24 @@ contract BankAccount is AccessControl {
      */
     function isAccountActive(address _owner) external view returns (bool) {
         return _isAccountActive(_owner);
+    }
+
+    /**
+     * @return The owner of the bankAccount contract.
+     * @notice This function is external and can be called by anyone to get the owner of the bankAccount contract.
+     * @dev It returns the address of the owner of the bankAccount contract.
+     */
+    function owner() external view returns (address) {
+        return i_owner; // Return the owner of the bankAccount contract
+    }
+
+    /**
+     * @return The admin role identifier.
+     * @notice This function is external and can be called by anyone to get the admin role identifier.
+     * @dev It returns the DEFAULT_ADMIN_ROLE constant from AccessControl.
+     */
+    function adminRole() external pure returns (bytes32) {
+        return DEFAULT_ADMIN_ROLE; // Return the admin role identifier
     }
 
 }

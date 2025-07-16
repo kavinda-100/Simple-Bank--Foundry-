@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IBankAccount} from "./interfaces/IBankAccount.sol";
+import {BankAccount} from "./BankAccount.sol";
 
 /**
  * @title Bank
@@ -23,9 +24,6 @@ contract Bank is AccessControl {
     // Events --------------------------------------------------------------------------------------
     event Borrowed(address indexed borrower, uint256 amount, uint256 dueDate); // Event emitted when a user borrows funds
     event PaidBack(address indexed borrower, uint256 amount); // Event emitted when a user pays back borrowed funds
-
-    // Role Definitions --------------------------------------------------------------------------------
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     // state variables -----------------------------------------------------------------------------
     IBankAccount private immutable i_bankAccount; // Immutable variable to store the bank account contract address
@@ -53,7 +51,7 @@ contract Bank is AccessControl {
         // Set the owner of the bank contract to the deployer
         i_owner = msg.sender;
         // Grant the deployer the admin role
-        grantRole(ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     // Modifiers -----------------------------------------------------------------------------------------
@@ -206,6 +204,34 @@ contract Bank is AccessControl {
         emit PaidBack(_borrower, totalAmount);
     }
 
+    /**
+     * @param _borrower The address of the borrower to freeze.
+     * @notice Function to freeze a borrower's account (admin only).
+     * @dev This function can be called when a borrower fails to pay back on time.
+     * @dev Only addresses with DEFAULT_ADMIN_ROLE can call this function.
+     */
+    function freezeBorrowerAccount(address _borrower) external onlyRole(DEFAULT_ADMIN_ROLE) isValidAddress(_borrower) {
+        // Check if the borrower has an outstanding loan
+        require(borrowers[_borrower].borrowedAmount > 0, "Bank: No outstanding loan");
+        
+        // Check if the due date has passed
+        require(block.timestamp > borrowers[_borrower].dueDate, "Bank: Due date not yet passed");
+        
+        // Freeze the account in BankAccount contract
+        i_bankAccount.freezeAccount(_borrower);
+    }
+
+    /**
+     * @param _borrower The address of the borrower to activate.
+     * @notice Function to activate a borrower's account (admin only).
+     * @dev This function can be called after a borrower has resolved their debt.
+     * @dev Only addresses with DEFAULT_ADMIN_ROLE can call this function.
+     */
+    function activateBorrowerAccount(address _borrower) external onlyRole(DEFAULT_ADMIN_ROLE) isValidAddress(_borrower) {
+        // Activate the account in BankAccount contract
+        i_bankAccount.activateAccount(_borrower);
+    }
+
 
     // View functions ------------------------------------------------------------------------------
     
@@ -311,5 +337,23 @@ contract Bank is AccessControl {
         ) 
     {
         return (MAX_BORROW_AMOUNT, INTEREST_RATE, BASIS_POINTS);
+    }
+
+    /**
+     * @return The owner of the bank contract.
+     * @notice This function is external and can be called by anyone to get the owner of the bank contract.
+     * @dev It returns the address of the owner of the bank contract.
+     */
+    function owner() external view returns (address) {
+        return i_owner; // Return the owner of the bank contract
+    }
+
+    /**
+     * @return The admin role identifier.
+     * @notice This function is external and can be called by anyone to get the admin role identifier.
+     * @dev It returns the DEFAULT_ADMIN_ROLE constant from AccessControl.
+     */
+    function adminRole() external pure returns (bytes32) {
+        return DEFAULT_ADMIN_ROLE; // Return the admin role identifier
     }
 }
