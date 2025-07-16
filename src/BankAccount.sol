@@ -139,6 +139,10 @@ contract BankAccount is AccessControl {
         }
         // Deposit the amount into the account
         s_balances[_user] += _amount;
+        // check if the account is active, if not, activate it
+        if (!s_accounts_active[_user]) {
+            _activateAccount(_user); // Activate the account if it was not active
+        }
         // Emit a deposit event
         emit Deposit(_user, _amount);
     }
