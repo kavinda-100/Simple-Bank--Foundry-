@@ -20,14 +20,19 @@ contract Bank is AccessControl {
     error Bank__AccountNotActive();
     error Bank__DueDatePassed();
     error Bank__TransferFailed();
+    error Bank__UnAuthorized();
+    error Bank__AccountAlreadyActive();
 
     // Events --------------------------------------------------------------------------------------
     event Borrowed(address indexed borrower, uint256 amount, uint256 dueDate); // Event emitted when a user borrows funds
     event PaidBack(address indexed borrower, uint256 amount); // Event emitted when a user pays back borrowed funds
+    event AccountFrozen(address indexed owner); // Event emitted when an account is frozen
+    event AccountActivated(address indexed owner); // Event emitted when an account is activated
 
     // state variables -----------------------------------------------------------------------------
     IBankAccount private immutable i_bankAccount; // Immutable variable to store the bank account contract address
     address private immutable i_owner; // Immutable variable to store the owner of the bank contract
+    mapping(address owner => bool isAccountActive) private s_accounts_active; // Mapping to check if an account is active
     uint256 private constant MAX_BORROW_AMOUNT = 100 ether; // Maximum amount that can be borrowed
     uint256 private constant INTEREST_RATE = 500; // Interest rate in basis points (500 = 5.00%)
     uint256 private constant BASIS_POINTS = 10000; // 1 basis point = 0.01%
@@ -70,6 +75,18 @@ contract Bank is AccessControl {
         _;
     }
 
+    /**
+     * @notice This modifier checks if the caller has the admin role
+     * @dev It reverts the transaction if the caller doesn't have admin privileges
+     */
+    modifier onlyAdmin() {
+        // Check if the caller has the admin role
+        if(!hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+            revert Bank__UnAuthorized(); // Revert if the caller is not an admin
+        }
+        _;
+    }
+
     // Public / External functions ----------------------------------------------------------------
 
     /**
@@ -98,7 +115,70 @@ contract Bank is AccessControl {
         i_bankAccount.transferFunds(_to, _amount);
     }
 
+    /**
+     * @notice This function allows an admin to freeze an account.
+     * @dev It sets the account's active status to false, preventing further transactions.
+     * @dev Only addresses with ADMIN_ROLE can call this function.
+     */
+    function freezeAccount(address _account) external onlyAdmin {
+        // Call the internal freeze account function
+        _freezeAccount(_account);
+    }
+
+    /**
+     * @notice This function allows an admin to activate an account.
+     * @dev It sets the account's active status to true, allowing transactions again.
+     * @dev Only addresses with ADMIN_ROLE can call this function.
+     */
+    function activateAccount(address _account) external onlyAdmin {
+        // Call the internal activate account function
+        _activateAccount(_account);
+    }
+
     // Internal functions --------------------------------------------------------------------------
+
+    /**
+     * @param _user The address of the account owner to check
+     * @return A boolean indicating whether the account is active or not.
+     * @dev This function checks if the account is active.
+     */
+    function _isAccountActive(address _user) internal isValidAddress(_user) view returns (bool)  {
+        return s_accounts_active[_user]; // Check if the account is active
+    }
+
+    /**
+     * @param _user The address of the account owner to freeze
+     * @dev This function freezes the account by setting its active status to false.
+     * It can be used to prevent further transactions from the account.
+     * @notice This function is internal and should be called with caution. NOTE: Freezing an account will prevent any deposits, withdrawals,  * or transfers. It is typically used for when user not payback their loan on time.
+     */
+    function _freezeAccount(address _user) internal isValidAddress(_user) {
+        // Ensure the account is currently active
+        if (!_isAccountActive(_user)) {
+            revert Bank__AccountNotActive(); // Revert if the account is not active
+        }
+        // Freeze the account
+        s_accounts_active[_user] = false; // Freeze account
+        // Emit an account frozen event
+        emit AccountFrozen(_user); // Emit event indicating account is frozen
+    }
+
+    /**
+     * @param _user The address of the account owner to activate
+     * @dev This function activates the account by setting its active status to true.
+     * It can be used to allow transactions from the account again.
+     * @notice This function is internal and should be called with caution.
+     */
+    function _activateAccount(address _user) internal isValidAddress(_user) {
+        // Ensure the account is not already active
+        if (_isAccountActive(_user)) {
+            revert Bank__AccountAlreadyActive(); // Revert if the account is already active
+        }
+        // Activate the account
+        s_accounts_active[_user] = true; // Activate account
+        // Emit an account activated event
+        emit AccountActivated(_user); // Emit event indicating account is activated
+    }
 
     /**
      * @dev Internal function to check if the borrower is eligible to borrow.
@@ -205,141 +285,9 @@ contract Bank is AccessControl {
         emit PaidBack(_borrower, totalAmount);
     }
 
-    /**
-     * @param _borrower The address of the borrower to freeze.
-     * @notice Function to freeze a borrower's account (admin only).
-     * @dev This function can be called when a borrower fails to pay back on time.
-     * @dev Only addresses with DEFAULT_ADMIN_ROLE can call this function.
-     */
-    function freezeBorrowerAccount(address _borrower) external onlyRole(DEFAULT_ADMIN_ROLE) isValidAddress(_borrower) {
-        // Check if the borrower has an outstanding loan
-        require(borrowers[_borrower].borrowedAmount > 0, "Bank: No outstanding loan");
-        
-        // Check if the due date has passed
-        require(block.timestamp > borrowers[_borrower].dueDate, "Bank: Due date not yet passed");
-        
-        // Freeze the account in BankAccount contract
-        i_bankAccount.freezeAccount(_borrower);
-    }
-
-    /**
-     * @param _borrower The address of the borrower to activate.
-     * @notice Function to activate a borrower's account (admin only).
-     * @dev This function can be called after a borrower has resolved their debt.
-     * @dev Only addresses with DEFAULT_ADMIN_ROLE can call this function.
-     */
-    function activateBorrowerAccount(address _borrower) external onlyRole(DEFAULT_ADMIN_ROLE) isValidAddress(_borrower) {
-        // Activate the account in BankAccount contract
-        i_bankAccount.activateAccount(_borrower);
-    }
-
 
     // View functions ------------------------------------------------------------------------------
     
-    /**
-     * @param _borrower The address of the borrower.
-     * @return borrowedAmount The amount borrowed by the borrower.
-     * @return interestRate The interest rate in basis points (10000 = 100%).
-     * @return borrowAt The timestamp when the loan was taken.
-     * @return dueDate The due date for loan repayment.
-     * @return currentInterest The current accrued interest.
-     * @return totalAmountDue The total amount due (principal + interest).
-     * @notice Function to get comprehensive borrower information.
-     */
-    function getBorrowerInfo(address _borrower) 
-        external 
-        view 
-        returns (
-            uint256 borrowedAmount,
-            uint256 interestRate,
-            uint256 borrowAt,
-            uint256 dueDate,
-            uint256 currentInterest,
-            uint256 totalAmountDue
-        ) 
-    {
-        borrower memory borrowerInfo = borrowers[_borrower];
-        currentInterest = _calculateInterest(_borrower);
-        
-        return (
-            borrowerInfo.borrowedAmount,
-            borrowerInfo.interestRate,
-            borrowerInfo.borrowAt,
-            borrowerInfo.dueDate,
-            currentInterest,
-            borrowerInfo.borrowedAmount + currentInterest
-        );
-    }
-
-    /**
-     * @param _borrower The address of the borrower.
-     * @param _timeElapsed Optional time elapsed in seconds. If 0, uses current time.
-     * @return interest The calculated interest for the given time period.
-     * @notice Function to preview interest calculation for a borrower.
-     * @dev Useful for front-end applications to show users expected interest.
-     */
-    function previewInterest(address _borrower, uint256 _timeElapsed) 
-        external 
-        view 
-        returns (uint256 interest) 
-    {
-        uint256 principal = borrowers[_borrower].borrowedAmount;
-        uint256 interestRate = borrowers[_borrower].interestRate;
-        uint256 borrowAt = borrowers[_borrower].borrowAt;
-        
-        if (principal == 0) {
-            return 0;
-        }
-        
-        uint256 timeToUse = _timeElapsed == 0 ? 
-            (block.timestamp > borrowAt ? block.timestamp - borrowAt : 0) : 
-            _timeElapsed;
-            
-        if (timeToUse == 0) {
-            return 0;
-        }
-        
-        return (principal * interestRate * timeToUse) / (BASIS_POINTS * SECONDS_IN_YEAR);
-    }
-
-    /**
-     * @param _principal The principal amount.
-     * @param _timeInDays The time period in days.
-     * @return interest The calculated interest for the given principal and time.
-     * @notice Function to calculate interest for any principal and time period.
-     * @dev Uses the contract's interest rate. Useful for front-end calculators.
-     */
-    function calculateInterestQuote(uint256 _principal, uint256 _timeInDays) 
-        external 
-        pure 
-        returns (uint256 interest) 
-    {
-        if (_principal == 0 || _timeInDays == 0) {
-            return 0;
-        }
-        
-        uint256 timeInSeconds = _timeInDays * 1 days;
-        return (_principal * INTEREST_RATE * timeInSeconds) / (BASIS_POINTS * SECONDS_IN_YEAR);
-    }
-
-    /**
-     * @return maxBorrowAmount The maximum amount that can be borrowed.
-     * @return interestRateBasisPoints The interest rate in basis points.
-     * @return basisPointsScale The scale used for basis points (10000).
-     * @notice Function to get contract constants for transparency.
-     */
-    function getContractConstants() 
-        external 
-        pure 
-        returns (
-            uint256 maxBorrowAmount,
-            uint256 interestRateBasisPoints,
-            uint256 basisPointsScale
-        ) 
-    {
-        return (MAX_BORROW_AMOUNT, INTEREST_RATE, BASIS_POINTS);
-    }
-
     /**
      * @return The owner of the bank contract.
      * @notice This function is external and can be called by anyone to get the owner of the bank contract.
@@ -358,10 +306,20 @@ contract Bank is AccessControl {
         return DEFAULT_ADMIN_ROLE; // Return the admin role identifier
     }
 
+    /**
+     * @param _user The address of the account owner to check
+     * @return A boolean indicating whether the account is active or not.
+     * @notice This function is external and can be called by anyone to check if an account is active.
+     * @dev It returns true if the account is active, false otherwise.
+     */
+    function isAccountActive(address _user) external view returns (bool) {
+        return _isAccountActive(_user);
+    }
+
     // Fallback/Receive functions to handle ETH transfers
     receive() external payable {
         // Bank can receive ETH to forward to BankAccount
+        i_bankAccount.deposit{value: msg.value}(msg.sender);
     }
 
-    // Functions --------------------------------------------------------------------------------
 }
