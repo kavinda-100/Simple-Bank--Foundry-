@@ -280,4 +280,21 @@ contract EthHandlingTest is Test {
 
         vm.stopPrank();
     }
+
+    /**
+     * @dev Test to verify transfer reverts if insufficient balance
+     */
+    function test_TransferInsufficientBalanceReverts() public {
+        console.log("=== Transfer Insufficient Balance Reverts Test ===");
+        
+        vm.startPrank(user1);
+        
+        // Expect revert if trying to transfer more than balance (this user has no balance yet)
+        vm.expectRevert(BankAccount.BankAccount__InsufficientBalance.selector);
+        
+        // Attempt to transfer more than deposited amount
+        bank.transferFunds(user2, 1 ether);
+        
+        vm.stopPrank();
+    }
 }
