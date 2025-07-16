@@ -119,7 +119,7 @@ contract EthHandlingTest is Test {
         emit Deposit(user1, depositAmount);
         
         // Deposit ETH through BankAccount
-        bankAccount.deposit{value: depositAmount}(user1);
+        bank.deposit{value: depositAmount}();
         
         vm.stopPrank();
     }
@@ -136,7 +136,7 @@ contract EthHandlingTest is Test {
         vm.expectRevert(BankAccount.BankAccount__DepositAmountMustBeGreaterThanZero.selector);
 
         // Attempt to deposit 0 ETH
-        bankAccount.deposit{value: 0}(user1);
+        bank.deposit{value: 0}();
         
         vm.stopPrank();
     }
@@ -172,7 +172,7 @@ contract EthHandlingTest is Test {
         uint256 withdrawAmount = 1 ether;
 
         // Deposit ETH to withdraw later
-        bankAccount.deposit{value: depositAmount}(user1);
+        bank.deposit{value: depositAmount}();
 
         // Check initial balances
         console.log("Before withdrawal: ===================");
@@ -182,7 +182,7 @@ contract EthHandlingTest is Test {
         console.log("Bank contract balance:", address(bank).balance);
 
         // Withdraw ETH from BankAccount
-        bankAccount.withdraw(withdrawAmount);
+        bank.withdraw(withdrawAmount);
 
         // Check final balances
         console.log("After withdrawal: ===================");
@@ -212,7 +212,7 @@ contract EthHandlingTest is Test {
         vm.expectRevert(BankAccount.BankAccount__InsufficientBalance.selector);
         
         // Attempt to withdraw more than deposited amount
-        bankAccount.withdraw(1 ether);
+        bank.withdraw(1 ether);
         
         vm.stopPrank();
     }
@@ -229,16 +229,55 @@ contract EthHandlingTest is Test {
         uint256 withdrawAmount = 0.5 ether;
 
         // Deposit ETH to withdraw later
-        bankAccount.deposit{value: depositAmount}(user1);
+        bank.deposit{value: depositAmount}();
 
         // Expect Withdrawal event to be emitted
         vm.expectEmit(true, false, false, true);
         emit Withdrawal(user1, withdrawAmount);
         
         // Withdraw ETH from BankAccount
-        bankAccount.withdraw(withdrawAmount);
-        
+        bank.withdraw(withdrawAmount);
+
         vm.stopPrank();
     }
 
+    // ============================== Tests for Transfer funds Functionality =========================================
+
+    /**
+     * @dev Test to verify transferring funds between accounts
+     */
+    function test_TransferFundsBetweenAccounts() public {
+        console.log("=== Transfer Funds Between Accounts Test ===");
+        
+        vm.startPrank(user1);
+        
+        uint256 depositAmount = 2 ether;
+        uint256 transferAmount = 1 ether;
+
+        // Deposit ETH to transfer later
+        bankAccount.deposit{value: depositAmount}(user1);
+
+        // Check initial balances
+        console.log("Before transfer: ===================");
+        console.log("User1 balance:", user1.balance);
+        console.log("User2 balance:", user2.balance);
+        console.log("User1 account balance:", bankAccount.getBalance(user1));
+        console.log("User2 account balance:", bankAccount.getBalance(user2));
+
+        // Transfer funds from user1 to user2
+        bank.transferFunds(user2, transferAmount);
+
+        // Check final balances
+        console.log("After transfer: ===================");
+        console.log("User1 balance:", user1.balance);
+        console.log("User2 balance:", user2.balance);
+        console.log("User1 account balance:", bankAccount.getBalance(user1));
+        console.log("User2 account balance:", bankAccount.getBalance(user2));
+
+        // Check user's account balances
+        assertEq(bankAccount.getBalance(user1), depositAmount - transferAmount);
+        assertEq(bankAccount.getBalance(user2), transferAmount);
+
+        vm.stopPrank();
+    }
 }
