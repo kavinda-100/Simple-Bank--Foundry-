@@ -158,7 +158,7 @@ contract BankAccount is AccessControl {
      * @notice This function is external and can be called by anyone to check the balance of an account.
      * @dev It returns the balance of the specified account owner.
      */
-    function getBalance(address _user) external view returns (uint256) {
+    function getBalance(address _user) external isValidAddress(_user) view returns (uint256) {
         return s_balances[_user];
     }
 

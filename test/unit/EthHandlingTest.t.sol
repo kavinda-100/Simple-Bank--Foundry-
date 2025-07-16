@@ -401,5 +401,42 @@ contract EthHandlingTest is Test {
 
         vm.stopPrank();
     }
-    
+
+    /**
+     * @dev Test to verify getBalance reverts for invalid user address
+     */
+    function test_GetBalanceInvalidAddress() public {
+        console.log("=== Get Balance Invalid Address Test ===");
+
+        vm.startPrank(user1);
+
+        // Expect revert if user address is zero
+        vm.expectRevert(BankAccount.BankAccount__InvalidAddress.selector);
+
+        // Attempt to get balance for zero address
+        bankAccount.getBalance(address(0));
+
+        vm.stopPrank();
+
+    }
+
+    /**
+     * @dev Test to verify getBalance returns zero for user with no balance
+     */
+    function test_GetBalanceNoBalance() public {
+        console.log("=== Get Balance No Balance Test ===");
+
+        vm.startPrank(user1);
+
+        // Check balance for user with no balance
+        uint256 balance = bankAccount.getBalance(user1);
+        console.log("User1 balance:", balance);
+
+        assertEq(balance, 0, "GetBalance return zero for user with no balance");
+
+        vm.stopPrank();
+    }
+
+
+
 }
