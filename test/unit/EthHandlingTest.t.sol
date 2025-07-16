@@ -11,11 +11,16 @@ import {DeployBank} from "../../script/DeployBank.s.sol";
 import {DeployBankAccount} from "../../script/DeployBankAccount.s.sol";
 
 contract EthHandlingTest is Test {
+    // Contracts to test
     Bank public bank;
     BankAccount public bankAccount;
     
+    // Addresses for test users
     address public user1 = address(0x123);
     address public user2 = address(0x456);
+
+    // Events ---------------------------------------------------------------------------------------------
+    event Deposit(address indexed owner, uint256 amount); // Event emitted when a deposit is made
     
     function setUp() public {
         // Deploy BankAccount using deployment script
@@ -91,6 +96,43 @@ contract EthHandlingTest is Test {
         
         // Check BankAccount contract received the ETH
         assertEq(address(bankAccount).balance, depositAmount);
+        
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test to verify Deposit event is emitted when depositing ETH
+     */
+    function test_DepositEventEmitted() public {
+        console.log("=== Deposit Event Emitted Test ===");
+        
+        vm.startPrank(user1);
+        
+        uint256 depositAmount = 1 ether;
+
+        // Expect Deposit event to be emitted
+        vm.expectEmit(true, false, false, true);
+        emit Deposit(user1, depositAmount);
+        
+        // Deposit ETH through BankAccount
+        bankAccount.deposit{value: depositAmount}(user1);
+        
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test to verify of send 0 ETH to BankAccount it should be reverted
+     */
+    function test_SendZeroEthReverts() public {
+        console.log("=== Send 0 ETH to BankAccount Reverts Test ===");
+        
+        vm.startPrank(user1);
+        
+        // Expect revert when sending 0 ETH
+        vm.expectRevert(BankAccount.BankAccount__DepositAmountMustBeGreaterThanZero.selector);
+
+        // Attempt to deposit 0 ETH
+        bankAccount.deposit{value: 0}(user1);
         
         vm.stopPrank();
     }
