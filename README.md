@@ -169,7 +169,7 @@ The project includes comprehensive test coverage:
 
 ### Current Test Status
 
-```md
+```
 ╭-------------------+--------+--------+---------╮
 | Test Suite        | Passed | Failed | Skipped |
 +===============================================+
