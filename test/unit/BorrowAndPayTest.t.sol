@@ -240,5 +240,20 @@ contract BorrowAndPayTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * @dev Test if the borrower account does not exist.
+     * if not revert with BankAccount__BorrowerDoesNotExist.
+     */
+    // function test_BorrowerAccountDoesNotExist() public {
+    //     // Start prank as user1
+    //     vm.startPrank(user1);
+
+    //     // Check if the user can borrow without an account
+    //     vm.expectRevert(BankAccount.BankAccount__BorrowerDoesNotExist.selector);
+    //     bank.borrow(5 ether);
+
+    //     vm.stopPrank();
+    // }
+
 
 }
