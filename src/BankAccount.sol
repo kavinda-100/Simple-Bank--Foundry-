@@ -133,10 +133,6 @@ contract BankAccount is AccessControl {
         if(address(this).balance < _amount) {
             revert BankAccount__InsufficientBalance(); // Revert if the contract has insufficient balance
         }
-        // check if the borrower has an account
-        if(s_balances[_borrower] == 0) {
-            revert BankAccount__BorrowerDoesNotExist(); // Revert if the borrower does not exist
-        }
         // Withdraw the amount from the borrower's account
         (bool success, ) = payable(_borrower).call{value: _amount}("");
         // success is checked by Bank contract
@@ -152,6 +148,16 @@ contract BankAccount is AccessControl {
         }
         // Emit an event indicating the loan reception
         emit LoanReceived(_borrower, msg.value);
+    }
+
+    /**
+     * @param _bankAddress The address of the Bank contract to grant admin role to
+     * @notice This function allows the current admin to grant admin role to the Bank contract.
+     * @dev Only the current admin can call this function.
+     */
+    function grantAdminRoleToBank(address _bankAddress) external isValidAddress(_bankAddress) onlyAdmin(msg.sender) {
+        // Grant admin role to the Bank contract
+        _grantRole(DEFAULT_ADMIN_ROLE, _bankAddress);
     }
 
 
@@ -277,16 +283,6 @@ contract BankAccount is AccessControl {
      */
     function getMinimumBalance() external pure returns (uint256) {
         return MINIMUM_BALANCE; // Return the minimum balance required to create an account
-    }
-
-    /**
-     * @param _bankAddress The address of the Bank contract to grant admin role to
-     * @notice This function allows the current admin to grant admin role to the Bank contract.
-     * @dev Only the current admin can call this function.
-     */
-    function grantAdminRoleToBank(address _bankAddress) external isValidAddress(_bankAddress) onlyAdmin(msg.sender) {
-        // Grant admin role to the Bank contract
-        _grantRole(DEFAULT_ADMIN_ROLE, _bankAddress);
     }
 
 }
