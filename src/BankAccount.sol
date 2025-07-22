@@ -133,10 +133,6 @@ contract BankAccount is AccessControl {
         if(address(this).balance < _amount) {
             revert BankAccount__InsufficientBalance(); // Revert if the contract has insufficient balance
         }
-        // check if the borrower has an account
-        if(s_balances[_borrower] == 0) {
-            revert BankAccount__BorrowerDoesNotExist(); // Revert if the borrower does not exist
-        }
         // Withdraw the amount from the borrower's account
         (bool success, ) = payable(_borrower).call{value: _amount}("");
         // success is checked by Bank contract
