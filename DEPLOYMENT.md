@@ -15,22 +15,6 @@ This script:
 - Provides a complete deployment summary
 - Ensures all permissions are set correctly
 
-## Alternative Step-by-Step Deployment
-
-If you prefer to deploy contracts separately:
-
-1. Deploy BankAccount first:
-
-```bash
-forge script script/DeployBankAccount.s.sol:DeployBankAccount --fork-url $RPC_URL --private-key $PRIVATE_KEY --broadcast
-```
-
-2. Deploy Bank (automatically grants admin role):
-
-```bash
-forge script script/DeployBank.s.sol:DeployBank <BANK_ACCOUNT_ADDRESS> --fork-url $RPC_URL --private-key $PRIVATE_KEY --broadcast
-```
-
 ## Local Development with Anvil
 
 For local testing and development:
@@ -79,6 +63,3 @@ forge test -vv
 - ✅ The deployment script automatically handles all admin role permissions
 - ✅ All tests are configured to use the comprehensive deployment script
 - ✅ No manual permission setup required after deployment
-- ⚠️ The step-by-step method is available but `DeployBankSystem` is recommended
-- This ensures the Bank contract can call `payLoan` on the BankAccount contract
-- The deployment handles all necessary permissions automatically

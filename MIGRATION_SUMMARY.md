@@ -7,18 +7,21 @@
 All unit tests have been migrated to use the `DeployBankSystem` deployment script:
 
 #### ✅ **BorrowAndPayTest.t.sol**
+
 - **Before**: Used separate `DeployBank` and `DeployBankAccount` scripts
 - **After**: Uses single `DeployBankSystem` script
 - **Removed**: `bankAccountDeployer` and `bankDeployer` variables
 - **Added**: Single `deployer` variable
 
 #### ✅ **AccessControlTest.t.sol**
+
 - **Before**: Used separate deployment scripts with multiple deployer tracking
 - **After**: Uses single `DeployBankSystem` script
 - **Removed**: `bankAccountDeployer` and `bankDeployer` variables
 - **Updated**: Test logic to handle deployment script behavior correctly
 
 #### ✅ **EthHandlingTest.t.sol**
+
 - **Before**: Used separate `DeployBank` and `DeployBankAccount` scripts
 - **After**: Uses single `DeployBankSystem` script
 - **Removed**: `bankAccountDeployer` and `bankDeployer` variables
@@ -68,6 +71,7 @@ Deployer: 0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496
 ## Production Ready
 
 The system is now production-ready with:
+
 - ✅ Automated deployment script
 - ✅ All permissions handled automatically  
 - ✅ Comprehensive testing suite
