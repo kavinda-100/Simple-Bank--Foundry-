@@ -19,9 +19,13 @@ contract BankAccount is AccessControl {
     error BankAccount__LoanAmountMustBeGreaterThanZero();
     error BankAccount__UnAuthorized();
     error BankAccount__BorrowerDoesNotExist();
+    error BankAccount__AccountAlreadyExists();
+    error BankAccount__DepositAmountMustBeGreaterThanMinimumAmount();
     
 
     // State variables -------------------------------------------------------------------------------------
+    // constants
+    uint256 private constant MINIMUM_BALANCE = 1 ether; // Minimum balance required for an account
     address private immutable i_owner; // Immutable variable to store the owner of the bankAccount contract
     // Mappings to store account information
     mapping(address owner => uint256 balance) private s_balances; // Mapping to store balances of each account
@@ -42,6 +46,7 @@ contract BankAccount is AccessControl {
     event Transfer(address indexed from, address indexed to, uint256 amount); // Event emitted when funds are transferred
     event LoanPaid(address indexed borrower, uint256 amount); // Event emitted when a loan is paid
     event LoanReceived(address indexed borrower, uint256 amount); // Event emitted when a loan is received
+    event CreateAnAccount(address indexed owner, uint256 amount); // Event emitted when an account is created
 
     // Modifiers -----------------------------------------------------------------------------------------
 
@@ -72,6 +77,15 @@ contract BankAccount is AccessControl {
     }
 
     // Public / External functions ------------------------------------------------------------------------------------
+
+    /**
+     * @notice This function allows the caller to create an account and deposit funds into it.
+     * @dev It checks if the amount is greater than MINIMUM_BALANCE before proceeding with the creation of the account.
+     */
+    function createAccount() external payable {
+        // Call the internal create account function
+        _createAccount(msg.sender, msg.value);
+    }
 
     /**
      * @notice This function allows the caller to deposit ETH into their account.
@@ -141,6 +155,27 @@ contract BankAccount is AccessControl {
 
 
     // Internal functions --------------------------------------------------------------------------------
+
+    /**
+     * @param _user The address of the account owner to deposit funds into creating the account
+     * @param _amount The amount to deposit into the account
+     * @notice This function creates an account for the user if it does not exist and deposits funds into it.
+     * @dev It checks if the amount is greater than MINIMUM_BALANCE before proceeding with the deposit.
+     */
+    function _createAccount(address _user, uint256 _amount) internal isValidAddress(_user) {
+        // Check if the account already exists
+        if (s_balances[_user] > 0) {
+            revert BankAccount__AccountAlreadyExists(); // Revert if the account already exists
+        }
+        // Ensure the deposit amount is greater than the minimum balance
+        if (_amount < MINIMUM_BALANCE) {
+            revert BankAccount__DepositAmountMustBeGreaterThanMinimumAmount(); // Revert if the amount is less than the minimum balance
+        }
+        // Initialize the account with the specified amount
+        s_balances[_user] = _amount;
+        // Emit a create account event
+        emit CreateAnAccount(_user, _amount);
+    }
 
     /**
      * @param _user The address of the account owner to deposit funds into
@@ -232,6 +267,15 @@ contract BankAccount is AccessControl {
      */
     function adminRole() external pure returns (bytes32) {
         return DEFAULT_ADMIN_ROLE; // Return the admin role identifier
+    }
+
+    /**
+     * @return The minimum balance required to create an account.
+     * @notice This function is external and can be called by anyone to get the minimum balance required to create an account.
+     * @dev It returns the constant MINIMUM_BALANCE defined in the contract.
+     */
+    function getMinimumBalance() external pure returns (uint256) {
+        return MINIMUM_BALANCE; // Return the minimum balance required to create an account
     }
 
 }
