@@ -288,7 +288,7 @@ contract Bank is AccessControl {
         });
         // Transfer the borrowed amount to the borrower
         // i_bankAccount.transferFunds(address(i_bankAccount), _borrower, _amount);
-        bool success = i_bankAccount.payLoan(_borrower, _amount, address(this)); // TODO: check if this is correct Need Improvement
+        bool success = i_bankAccount.payLoan(_borrower, _amount, address(this));
         // Check if the transfer was successful
         if (!success) {
             revert Bank__TransferFailed(); // Revert if the transfer fails

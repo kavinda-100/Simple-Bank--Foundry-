@@ -22,6 +22,10 @@ contract BorrowAndPayTest is Test {
     uint256 constant USER_INITIAL_BALANCE = 20 ether;
     uint256 constant USER_DEPOSIT_AMOUNT = 10 ether;
 
+    // Events --------------------------------------------------------------------------------------
+    event Borrowed(address indexed borrower, uint256 amount, uint256 dueDate); // Event emitted when a user borrows funds
+    event LoanPaid(address indexed borrower, uint256 amount); // Event emitted when a loan is paid
+
      function setUp() public {
         // Deploy complete Bank system using deployment script
         DeployBankSystem deployBankSystemScript = new DeployBankSystem();
@@ -47,6 +51,10 @@ contract BorrowAndPayTest is Test {
 
     // ================================== Borrow Tests ==================================
 
+    /**
+     * @dev Test to verify that a user can borrow funds from the Bank contract.
+     * It checks if the borrower's balance is updated correctly after borrowing.
+     */
     function test_Borrow() public createAnAccount(user1) {
         // Start prank as user1 to borrow
         vm.startPrank(user1);
@@ -62,17 +70,49 @@ contract BorrowAndPayTest is Test {
         // Check if the borrower's balance is updated correctly
         assertEq(address(user1).balance, (USER_INITIAL_BALANCE - USER_DEPOSIT_AMOUNT) + borrowAmount, "User1's balance should be updated after borrowing");
 
-        // get the borrower's details
-        // console2.log("Borrower details:");
-        // (uint256 borrowedAmount,
-        // uint256 interestRate,
-        // uint256 borrowAt,
-        // uint256 dueDate) = bank.getBorrowerDetails(user1);
-        // console2.log("User1's borrowed amount:", borrowedAmount);
-        // console2.log("User1's interest rate:", interestRate);
-        // console2.log("User1's borrow timestamp:", borrowAt);
-        // console2.log("User1's due date:", dueDate);
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test to verify that a borrowing user emits the Borrowed event with correct parameters.
+     */
+    function test_BorrowEvent() public createAnAccount(user1) {
+        // Start prank as user1 to borrow
+        vm.startPrank(user1);
+
+        // User borrows 5 ether
+        uint256 borrowAmount = 5 ether;
+        uint256 dueDate = block.timestamp + 30 days; // Example due date
+
+        // Expect the Borrowed event to be emitted
+        vm.expectEmit(true, true, true, true);
+        emit Borrowed(user1, borrowAmount, dueDate);
+
+        // Call the borrow function
+        bank.borrow(borrowAmount);
 
         vm.stopPrank();
     }
+    /**
+     * @dev Test to verify that a borrowing user emits the LoanPaid event with correct parameters.
+     */
+    function test_LoanPaidEvent() public createAnAccount(user1) {
+        // Start prank as user1 to borrow
+        vm.startPrank(user1);
+
+        // User borrows 5 ether
+        uint256 borrowAmount = 5 ether;
+        bank.borrow(borrowAmount);
+
+        // Expect the LoanPaid event to be emitted when the loan is paid
+        vm.expectEmit(true, true, true, true);
+        emit LoanPaid(user1, borrowAmount);
+
+        // Call the payLoan function
+        bank.borrow(borrowAmount);
+
+        vm.stopPrank();
+    }
+
+
 }
