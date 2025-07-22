@@ -6,15 +6,13 @@ import {Bank} from "../../src/Bank.sol";
 import {BankAccount} from "../../src/BankAccount.sol";
 
 // import deployment scripts
-import {DeployBank} from "../../script/DeployBank.s.sol";
-import {DeployBankAccount} from "../../script/DeployBankAccount.s.sol";
+import {DeployBankSystem} from "../../script/DeployBankSystem.s.sol";
 
 contract BorrowAndPayTest is Test {
     // Contracts to test
     Bank public bank;
     BankAccount public bankAccount;
-    address public bankAccountDeployer;
-    address public bankDeployer;
+    address public deployer;
 
     // Addresses for test users
     address public user1 = address(0x123);
@@ -25,20 +23,9 @@ contract BorrowAndPayTest is Test {
     uint256 constant USER_DEPOSIT_AMOUNT = 10 ether;
 
      function setUp() public {
-        // Deploy BankAccount using deployment script
-        DeployBankAccount deployBankAccountScript = new DeployBankAccount();
-        (bankAccount, bankAccountDeployer) = deployBankAccountScript.run();
-
-        // Deploy Bank using deployment script
-        DeployBank deployBankScript = new DeployBank();
-        (bank, bankDeployer) = deployBankScript.run(address(bankAccount));
-
-        // Grant admin role to Bank contract so it can call payLoan
-        // Get the actual owner/admin of the BankAccount contract
-        address bankAccountOwner = bankAccount.owner();
-        vm.startPrank(bankAccountOwner);
-        bankAccount.grantAdminRoleToBank(address(bank));
-        vm.stopPrank();
+        // Deploy complete Bank system using deployment script
+        DeployBankSystem deployBankSystemScript = new DeployBankSystem();
+        (bankAccount, bank, deployer) = deployBankSystemScript.run();
 
         // Give test users some ETH to work with
         vm.deal(user1, USER_INITIAL_BALANCE);
