@@ -33,6 +33,13 @@ contract BorrowAndPayTest is Test {
         DeployBank deployBankScript = new DeployBank();
         (bank, bankDeployer) = deployBankScript.run(address(bankAccount));
 
+        // Grant admin role to Bank contract so it can call payLoan
+        // Get the actual owner/admin of the BankAccount contract
+        address bankAccountOwner = bankAccount.owner();
+        vm.startPrank(bankAccountOwner);
+        bankAccount.grantAdminRoleToBank(address(bank));
+        vm.stopPrank();
+
         // Give test users some ETH to work with
         vm.deal(user1, USER_INITIAL_BALANCE);
         vm.deal(user2, USER_INITIAL_BALANCE);
