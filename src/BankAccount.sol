@@ -154,6 +154,16 @@ contract BankAccount is AccessControl {
         emit LoanReceived(_borrower, msg.value);
     }
 
+    /**
+     * @param _bankAddress The address of the Bank contract to grant admin role to
+     * @notice This function allows the current admin to grant admin role to the Bank contract.
+     * @dev Only the current admin can call this function.
+     */
+    function grantAdminRoleToBank(address _bankAddress) external isValidAddress(_bankAddress) onlyAdmin(msg.sender) {
+        // Grant admin role to the Bank contract
+        _grantRole(DEFAULT_ADMIN_ROLE, _bankAddress);
+    }
+
 
     // Internal functions --------------------------------------------------------------------------------
 
@@ -277,16 +287,6 @@ contract BankAccount is AccessControl {
      */
     function getMinimumBalance() external pure returns (uint256) {
         return MINIMUM_BALANCE; // Return the minimum balance required to create an account
-    }
-
-    /**
-     * @param _bankAddress The address of the Bank contract to grant admin role to
-     * @notice This function allows the current admin to grant admin role to the Bank contract.
-     * @dev Only the current admin can call this function.
-     */
-    function grantAdminRoleToBank(address _bankAddress) external isValidAddress(_bankAddress) onlyAdmin(msg.sender) {
-        // Grant admin role to the Bank contract
-        _grantRole(DEFAULT_ADMIN_ROLE, _bankAddress);
     }
 
 }
