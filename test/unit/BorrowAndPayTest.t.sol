@@ -163,5 +163,51 @@ contract BorrowAndPayTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * @dev Test if the borrower details are correct after borrowing.
+     */
+    function test_BorrowerDetailsAfterBorrowing() public createAnAccount(user1) {
+        // Start prank as user1
+        vm.startPrank(user1);
+
+        // User borrows 5 ether
+        uint256 borrowAmount = 5 ether;
+        bank.borrow(borrowAmount);
+
+        // Option 1: Using struct directly
+        Bank.borrower memory borrowerDetails = bank.getBorrowerDetails(user1);
+        assertEq(borrowerDetails.borrowedAmount, borrowAmount, "Borrowed amount should match");
+        assertTrue(borrowerDetails.dueDate > block.timestamp, "Due date should be in the future");
+        assertGt(borrowerDetails.interestRate, 0, "Interest rate should be greater than 0");
+        assertEq(borrowerDetails.borrowAt, block.timestamp, "Borrow timestamp should match current timestamp");
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test borrower details using destructuring (individual values).
+     */
+    function test_BorrowerDetailsDestructuring() public createAnAccount(user1) {
+        // Start prank as user1
+        vm.startPrank(user1);
+
+        // User borrows 5 ether
+        uint256 borrowAmount = 5 ether;
+        bank.borrow(borrowAmount);
+
+        // Option 2: Using destructuring with new function
+        (uint256 borrowedAmount,
+         uint256 interestRate,
+         uint256 borrowAt,
+         uint256 dueDate) = bank.getBorrowerDetailsValues(user1);
+         
+        assertEq(borrowedAmount, borrowAmount, "Borrowed amount should match");
+        assertTrue(dueDate > block.timestamp, "Due date should be in the future");
+        assertGt(interestRate, 0, "Interest rate should be greater than 0");
+        assertEq(borrowAt, block.timestamp, "Borrow timestamp should match current timestamp");
+
+        vm.stopPrank();
+    }
+
 
 }

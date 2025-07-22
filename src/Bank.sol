@@ -384,13 +384,27 @@ contract Bank is AccessControl {
 
     /**
      * @param _borrower The address of the borrower to get details for
-     * @return borrower Returns the details of the borrower including borrowed amount, interest rate, borrow time, and due date.
-     * @notice This function is external and can be called by anyone to get the borrower's details.
-     * @dev It returns a struct containing the borrower's details.
+     * @return borrower Returns the borrower's details as a struct.
+     * @notice Function to get the borrower's details.
+     * @dev Returns the borrower's details including borrowed amount, interest rate, borrow time, and due date.
      */
     function getBorrowerDetails(address _borrower) external view returns (borrower memory) {
         // Return the borrower's details
         return borrowers[_borrower];
+    }
+
+    /**
+     * @param _borrower The address of the borrower to get details for
+     * @return borrowedAmount The total amount borrowed by the borrower
+     * @return interestRate The interest rate applied to the loan
+     * @return borrowAt The timestamp when the loan was taken
+     * @return dueDate The due date for loan repayment
+     * @notice Function to get the borrower's details as individual values
+     * @dev Returns individual values from the borrower struct for easier destructuring
+     */
+    function getBorrowerDetailsValues(address _borrower) external view returns (uint256 borrowedAmount, uint256 interestRate, uint256 borrowAt, uint256 dueDate) {
+        borrower memory borrowerInfo = borrowers[_borrower];
+        return (borrowerInfo.borrowedAmount, borrowerInfo.interestRate, borrowerInfo.borrowAt, borrowerInfo.dueDate);
     }
 
     // Fallback/Receive functions to handle ETH transfers
