@@ -79,12 +79,13 @@ contract BankAccount is AccessControl {
     // Public / External functions ------------------------------------------------------------------------------------
 
     /**
+     * @param _user The address of the user to create an account for
      * @notice This function allows the caller to create an account and deposit funds into it.
      * @dev It checks if the amount is greater than MINIMUM_BALANCE before proceeding with the creation of the account.
      */
-    function createAccount() external payable {
+    function createAccount(address _user) external payable {
         // Call the internal create account function
-        _createAccount(msg.sender, msg.value);
+        _createAccount(_user, msg.value);
     }
 
     /**
