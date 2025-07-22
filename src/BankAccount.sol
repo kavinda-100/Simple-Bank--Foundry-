@@ -68,9 +68,9 @@ contract BankAccount is AccessControl {
      * @notice This modifier checks if the caller has the admin role
      * @dev It reverts the transaction if the caller doesn't have admin privileges
      */
-    modifier onlyAdmin() {
+    modifier onlyAdmin(address _admin) {
         // Check if the caller has the admin role
-        if(!hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+        if(!hasRole(DEFAULT_ADMIN_ROLE, _admin)) {
             revert BankAccount__UnAuthorized(); // Revert if the caller is not an admin
         }
         _;
@@ -124,7 +124,7 @@ contract BankAccount is AccessControl {
      * @notice This function allows the caller to pay a loan for a borrower.
      * @dev It checks if the amount is greater than zero and if the contract has sufficient balance before proceeding with the payment.
      */
-    function payLoan(address _borrower, uint256 _amount) external  isValidAddress(_borrower) onlyAdmin returns (bool) {
+    function payLoan(address _borrower, uint256 _amount, address _admin) external  isValidAddress(_borrower) onlyAdmin(_admin) returns (bool) {
         // Ensure the amount is greater than zero
         if (_amount <= 0) {
             revert BankAccount__LoanAmountMustBeGreaterThanZero(); // Revert if the amount is zero or negative
@@ -145,7 +145,7 @@ contract BankAccount is AccessControl {
         return success;
     }
 
-    function receiveLoan(address _borrower) external payable isValidAddress(_borrower) onlyAdmin {
+    function receiveLoan(address _borrower, address _admin) external payable isValidAddress(_borrower) onlyAdmin(_admin) {
         // check if the borrower has an account
         if(s_balances[_borrower] == 0) {
             revert BankAccount__BorrowerDoesNotExist(); // Revert if the borrower does not exist
