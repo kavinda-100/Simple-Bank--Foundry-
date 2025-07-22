@@ -44,7 +44,7 @@ All unit tests have been migrated to use the `DeployBankSystem` deployment scrip
 
 ## Test Results
 
-```
+```md
 Ran 3 test suites: 26 tests passed, 0 failed, 0 skipped
 ```
 
@@ -52,7 +52,7 @@ Ran 3 test suites: 26 tests passed, 0 failed, 0 skipped
 
 Each test now shows the complete deployment process:
 
-```
+```md
 Deploying complete Bank system...
 1. Deploying BankAccount...
 BankAccount deployed at: 0x34A1D3fff3958843C43aD80F30b94c510645C316
