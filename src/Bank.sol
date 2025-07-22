@@ -317,9 +317,9 @@ contract Bank is AccessControl {
      */
     function _payBack(address _borrower, uint256 _amount) internal isValidAddress(_borrower) {
         // Check if the borrower has an active account
-        // if(!_isAccountActive(_borrower)) {
-        //     revert Bank__AccountNotActive(); // Revert if the account is not active
-        // }
+        if(!_isAccountActive(_borrower)) {
+            revert Bank__AccountNotActive(); // Revert if the account is not active
+        }
         // Check if the due date has passed
         if(block.timestamp > borrowers[_borrower].dueDate) {
             revert Bank__DueDatePassed(); // Revert if the due date has passed
