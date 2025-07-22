@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 
 import {Script, console} from "forge-std/Script.sol";
-import { Bank } from "../src/Bank.sol";
-import { BankAccount } from "../src/BankAccount.sol";
+import { Bank } from "../../src/Bank.sol";
+import { BankAccount } from "../../src/BankAccount.sol";
 
 contract DeployBank is Script {
     function run(address bankAccountAddress) external returns (Bank, address) {
