@@ -209,5 +209,36 @@ contract BorrowAndPayTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * @dev Test if the borrow amount is greater than zero.
+     * if not revert with BankAccount__LoanAmountMustBeGreaterThanZero.
+     */
+    function test_BorrowAmountGreaterThanZero() public createAnAccount(user1) {
+        // Start prank as user1
+        vm.startPrank(user1);
+
+        // Check if the user can borrow a zero amount
+        vm.expectRevert(BankAccount.BankAccount__LoanAmountMustBeGreaterThanZero.selector);
+        bank.borrow(0);
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test if the BankAccount contract has sufficient balance.
+     * if not revert with BankAccount__InsufficientBalance.
+     */
+    function test_InsufficientBalance() public {
+        // Start prank as user1
+        vm.startPrank(user1);
+        bank.createAccount{value: 10 ether}();
+
+        // Check if the user can borrow more than their balance
+        vm.expectRevert(BankAccount.BankAccount__InsufficientBalance.selector);
+        bank.borrow(30 ether);
+
+        vm.stopPrank();
+    }
+
 
 }
