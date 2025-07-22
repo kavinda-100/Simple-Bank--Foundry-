@@ -93,6 +93,7 @@ contract BorrowAndPayTest is Test {
 
         vm.stopPrank();
     }
+
     /**
      * @dev Test to verify that a borrowing user emits the LoanPaid event with correct parameters.
      */
@@ -110,6 +111,35 @@ contract BorrowAndPayTest is Test {
 
         // Call the payLoan function
         bank.borrow(borrowAmount);
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test is eligible for borrowing funds.
+     * It checks if the user has an active account to borrow.
+     */
+    function test_IsEligibleForBorrowing() public createAnAccount(user1) {
+        // Start prank as user1
+        vm.startPrank(user1);
+
+        // Check if the user is eligible for borrowing
+        bank.borrow(5 ether);
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test is eligible for borrowing funds.
+     * It checks if the user has an active account to borrow if not revert with Bank__NotEligibleToBorrow.
+     */
+    function test_IsNotEligibleForBorrowing() public {
+        // Start prank as user1
+        vm.startPrank(user1);
+
+        // Check if the user is eligible for borrowing
+        vm.expectRevert(Bank.Bank__NotEligibleToBorrow.selector);
+        bank.borrow(5 ether);
 
         vm.stopPrank();
     }

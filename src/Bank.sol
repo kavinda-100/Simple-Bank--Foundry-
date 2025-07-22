@@ -220,8 +220,8 @@ contract Bank is AccessControl {
      * @return bool Returns true if the borrower is eligible, false otherwise.
      */
     function _isEligibleToBorrow(address _borrower) internal view returns (bool) {
-        // Check if the borrower has an active account and has not borrowed more than the maximum borrow amount
-        return _isAccountActive(_borrower) && borrowers[_borrower].borrowedAmount <= MAX_BORROW_AMOUNT;
+        // Check if the borrower has an active account
+        return _isAccountActive(_borrower);
     }
 
     /**
