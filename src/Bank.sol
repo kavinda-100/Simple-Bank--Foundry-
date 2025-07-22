@@ -288,7 +288,7 @@ contract Bank is AccessControl {
         });
         // Transfer the borrowed amount to the borrower
         // i_bankAccount.transferFunds(address(i_bankAccount), _borrower, _amount);
-        bool success = i_bankAccount.payLoan(_borrower, _amount); // TODO: check if this is correct Need Improvement
+        bool success = i_bankAccount.payLoan(_borrower, _amount, address(this)); // TODO: check if this is correct Need Improvement
         // Check if the transfer was successful
         if (!success) {
             revert Bank__TransferFailed(); // Revert if the transfer fails
@@ -331,7 +331,7 @@ contract Bank is AccessControl {
             revert Bank__AmountIsInsufficient(); // Revert if the amount to pay back is less than the total amount
         }
         // Transfer the total amount back to the bank
-        i_bankAccount.receiveLoan{value: _amount}(_borrower);
+        i_bankAccount.receiveLoan{value: _amount}(_borrower, address(this));
         // Update the borrower's details
         borrowers[_borrower].borrowedAmount = 0;
         borrowers[_borrower].interestRate = 0;
@@ -380,6 +380,17 @@ contract Bank is AccessControl {
      */
     function isAccountActive(address _user) external view returns (bool) {
         return _isAccountActive(_user);
+    }
+
+    /**
+     * @param _borrower The address of the borrower to get details for
+     * @return borrower Returns the details of the borrower including borrowed amount, interest rate, borrow time, and due date.
+     * @notice This function is external and can be called by anyone to get the borrower's details.
+     * @dev It returns a struct containing the borrower's details.
+     */
+    function getBorrowerDetails(address _borrower) external view returns (borrower memory) {
+        // Return the borrower's details
+        return borrowers[_borrower];
     }
 
     // Fallback/Receive functions to handle ETH transfers

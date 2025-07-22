@@ -7,15 +7,13 @@ import {Bank} from "../../src/Bank.sol";
 import {BankAccount} from "../../src/BankAccount.sol";
 
 // import deployment scripts
-import {DeployBank} from "../../script/DeployBank.s.sol";
-import {DeployBankAccount} from "../../script/DeployBankAccount.s.sol";
+import {DeployBankSystem} from "../../script/DeployBankSystem.s.sol";
 
 contract EthHandlingTest is Test {
     // Contracts to test
     Bank public bank;
     BankAccount public bankAccount;
-    address public bankAccountDeployer;
-    address public bankDeployer;
+    address public deployer;
     
     // Addresses for test users
     address public user1 = address(0x123);
@@ -29,15 +27,12 @@ contract EthHandlingTest is Test {
     event Withdrawal(address indexed owner, uint256 amount); // Event emitted when a withdrawal is made
     event Transfer(address indexed from, address indexed to, uint256 amount); // Event emitted when funds are transferred
     event CreateAnAccount(address indexed owner, uint256 amount); // Event emitted when an account is created
+    event AccountActivated(address indexed owner); // Event emitted when an account is activated
     
     function setUp() public {
-        // Deploy BankAccount using deployment script
-        DeployBankAccount deployBankAccountScript = new DeployBankAccount();
-        (bankAccount, bankAccountDeployer) = deployBankAccountScript.run();
-
-        // Deploy Bank using deployment script
-        DeployBank deployBankScript = new DeployBank();
-        (bank, bankDeployer) = deployBankScript.run(address(bankAccount));
+        // Deploy complete Bank system using deployment script
+        DeployBankSystem deployBankSystemScript = new DeployBankSystem();
+        (bankAccount, bank, deployer) = deployBankSystemScript.run();
         
         // Give test users some ETH to work with
         vm.deal(user1, 10 ether);
@@ -74,6 +69,22 @@ contract EthHandlingTest is Test {
         // Check if the BankAccount contract emitted the CreateAnAccount event
         vm.expectEmit(true, false, false, true);
         emit CreateAnAccount(user1, USER_DEPOSIT_AMOUNT);
+
+        bank.createAccount{value: USER_DEPOSIT_AMOUNT}();
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test to verify creating an account emit AccountActivated event
+     */
+    function test_CreateAccountActivatedEventEmitted() public {
+        console.log("=== Create Account Activated Event Emitted Test ===");
+        vm.startPrank(user1);
+
+        // Check if the BankAccount contract emitted the AccountActivated event
+        vm.expectEmit(true, false, false, true);
+        emit AccountActivated(user1);
 
         bank.createAccount{value: USER_DEPOSIT_AMOUNT}();
 
