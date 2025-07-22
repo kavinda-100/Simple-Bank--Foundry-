@@ -43,7 +43,7 @@ The system consists of two main contracts:
 
 ## Project Structure
 
-```
+```md
 ├── src/
 │   ├── Bank.sol                    # Main banking contract with borrowing functionality
 │   ├── BankAccount.sol             # Core account management contract
@@ -169,7 +169,7 @@ The project includes comprehensive test coverage:
 
 ### Current Test Status
 
-```
+```md
 ╭-------------------+--------+--------+---------╮
 | Test Suite        | Passed | Failed | Skipped |
 +===============================================+
