@@ -19,8 +19,9 @@ contract BorrowAndPayTest is Test {
     address public user2 = address(0x456);
 
     // constants
-    uint256 constant USER_INITIAL_BALANCE = 20 ether;
-    uint256 constant USER_DEPOSIT_AMOUNT = 10 ether;
+    uint256 constant USER_INITIAL_BALANCE = 300 ether;
+    uint256 constant USER_DEPOSIT_AMOUNT = 200 ether;
+    uint256 private constant MAX_BORROW_AMOUNT = 100 ether; // Maximum amount that can be borrowed
 
     // Events --------------------------------------------------------------------------------------
     event Borrowed(address indexed borrower, uint256 amount, uint256 dueDate); // Event emitted when a user borrows funds
@@ -140,6 +141,24 @@ contract BorrowAndPayTest is Test {
         // Check if the user is eligible for borrowing
         vm.expectRevert(Bank.Bank__NotEligibleToBorrow.selector);
         bank.borrow(5 ether);
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test if the maximum borrow amount is reached.
+     * It checks if the user has an active account to borrow if not revert with Bank__MaxBorrowAmountReached.
+     */
+    function test_MaxBorrowAmountReached() public createAnAccount(user1) {
+        // Start prank as user1
+        vm.startPrank(user1);
+
+        // User borrows the maximum amount
+        bank.borrow(90 ether);
+
+        // Check if the user can borrow more than the maximum amount
+        vm.expectRevert(Bank.Bank__MaxBorrowAmountReached.selector);
+        bank.borrow(20 ether);
 
         vm.stopPrank();
     }
