@@ -21,10 +21,14 @@ contract EthHandlingTest is Test {
     address public user1 = address(0x123);
     address public user2 = address(0x456);
 
+    // constants
+    uint256 constant USER_DEPOSIT_AMOUNT = 2 ether;
+
     // Events ---------------------------------------------------------------------------------------------
     event Deposit(address indexed owner, uint256 amount); // Event emitted when a deposit is made
     event Withdrawal(address indexed owner, uint256 amount); // Event emitted when a withdrawal is made
     event Transfer(address indexed from, address indexed to, uint256 amount); // Event emitted when funds are transferred
+    event CreateAnAccount(address indexed owner, uint256 amount); // Event emitted when an account is created
     
     function setUp() public {
         // Deploy BankAccount using deployment script
@@ -38,6 +42,73 @@ contract EthHandlingTest is Test {
         // Give test users some ETH to work with
         vm.deal(user1, 10 ether);
         vm.deal(user2, 10 ether);
+    }
+
+    // ============================== Tests for Create An Account Functionality =========================================
+    /**
+     * @dev Test to verify creating a new account
+     */
+    function test_CreateAccount() public {
+        console.log("=== Create Account Test ===");
+        // Start prank as user1 to create an account
+        vm.startPrank(user1);
+
+        bank.createAccount{value: USER_DEPOSIT_AMOUNT}();
+        // Check if the account was created successfully
+        uint256 user1Balance = bankAccount.getBalance(user1);
+        console.log("User1 account balance after creation:", user1Balance);
+        assertEq(user1Balance, USER_DEPOSIT_AMOUNT, "Account creation failed or balance mismatch");
+        // Check if the BankAccount contract received the ETH
+        assertEq(address(bankAccount).balance, USER_DEPOSIT_AMOUNT, "BankAccount contract receive the ETH");
+        console.log("BankAccount contract balance after creation:", address(bankAccount).balance);
+
+        vm.stopPrank();
+    }
+    /**
+     * @dev Test to verify creating an account emits CreateAnAccount event
+     */
+    function test_CreateAccountEventEmitted() public {
+        console.log("=== Create Account Event Emitted Test ===");
+        vm.startPrank(user1);
+
+        // Check if the BankAccount contract emitted the CreateAnAccount event
+        vm.expectEmit(true, false, false, true);
+        emit CreateAnAccount(user1, USER_DEPOSIT_AMOUNT);
+
+        bank.createAccount{value: USER_DEPOSIT_AMOUNT}();
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test to verify creating an account with BankAccount__DepositAmountMustBeGreaterThanMinimumAmount reverts
+     */
+    function test_CreateAccountWithInsufficientDepositReverts() public {
+        console.log("=== Create Account With Insufficient Deposit Reverts Test ===");
+        vm.startPrank(user1);
+
+        // Try to create an account with 0 ETH
+        vm.expectRevert(BankAccount.BankAccount__DepositAmountMustBeGreaterThanMinimumAmount.selector);
+        bank.createAccount{value: 0}();
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test to verify creating an account with BankAccount__AccountAlreadyExists reverts
+     */
+    function test_CreateAccountWithExistingAccountReverts() public {
+        console.log("=== Create Account With Existing Account Reverts Test ===");
+        vm.startPrank(user1);
+
+        // Create the account first
+        bank.createAccount{value: USER_DEPOSIT_AMOUNT}();
+
+        // Try to create the account again
+        vm.expectRevert(BankAccount.BankAccount__AccountAlreadyExists.selector);
+        bank.createAccount{value: USER_DEPOSIT_AMOUNT}();
+
+        vm.stopPrank();
     }
 
     // ============================== Tests for Deposit Functionality =========================================
