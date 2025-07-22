@@ -96,7 +96,7 @@ contract Bank is AccessControl {
      */
     function createAccount() external payable {
         // Create an account in the BankAccount contract
-        i_bankAccount.createAccount{value: msg.value}();
+        i_bankAccount.createAccount{value: msg.value}(msg.sender);
         // Activate the account after creation
         _activateAccount(msg.sender);
     }
