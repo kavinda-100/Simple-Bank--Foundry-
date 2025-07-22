@@ -91,6 +91,17 @@ contract Bank is AccessControl {
     // Public / External functions ----------------------------------------------------------------
 
     /**
+     * @notice Function to create an account in the Bank.
+     * @dev User sends ETH and Bank forwards it to BankAccount on behalf of the user.
+     */
+    function createAccount() external payable {
+        // Create an account in the BankAccount contract
+        i_bankAccount.createAccount{value: msg.value}();
+        // Activate the account after creation
+        _activateAccount(msg.sender);
+    }
+
+    /**
      * @notice Function to deposit ETH to the Bank.
      * @dev User sends ETH and Bank forwards it to BankAccount on behalf of the user.
      */
@@ -306,9 +317,9 @@ contract Bank is AccessControl {
      */
     function _payBack(address _borrower, uint256 _amount) internal isValidAddress(_borrower) {
         // Check if the borrower has an active account
-        if(!_isAccountActive(_borrower)) {
-            revert Bank__AccountNotActive(); // Revert if the account is not active
-        }
+        // if(!_isAccountActive(_borrower)) {
+        //     revert Bank__AccountNotActive(); // Revert if the account is not active
+        // }
         // Check if the due date has passed
         if(block.timestamp > borrowers[_borrower].dueDate) {
             revert Bank__DueDatePassed(); // Revert if the due date has passed
