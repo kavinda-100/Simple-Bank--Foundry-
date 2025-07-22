@@ -3,8 +3,8 @@ pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
-import "../../src/Bank.sol";
-import "../../src/BankAccount.sol";
+import {Bank} from "../../src/Bank.sol";
+import {BankAccount} from "../../src/BankAccount.sol";
 
 // import deployment scripts
 import {DeployBank} from "../../script/DeployBank.s.sol";
