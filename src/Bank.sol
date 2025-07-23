@@ -24,6 +24,7 @@ contract Bank is AccessControl {
     error Bank__AccountAlreadyActive();
     error Bank__AmountIsInsufficient();
     error Bank__InsufficientActivationFee(); // Error for insufficient activation fee
+    error Bank__InsufficientDueDayPassedFee(); // Error for insufficient due day passed fee
 
     // Events --------------------------------------------------------------------------------------
     event Borrowed(address indexed borrower, uint256 amount, uint256 dueDate); // Event emitted when a user borrows funds
@@ -39,7 +40,8 @@ contract Bank is AccessControl {
     uint256 private constant INTEREST_RATE = 500; // Interest rate in basis points (500 = 5.00%)
     uint256 private constant BASIS_POINTS = 10000; // 1 basis point = 0.01%
     uint256 private constant SECONDS_IN_YEAR = 365 days; // Seconds in a year for annualized interest
-    uint256 private constant ACTIVATION_FEE = 0.05 ether; // Activation fee for accounts
+    uint256 private constant ACTIVATION_FEE = 0.01 ether; // Activation fee for accounts
+    uint256 private constant DUE_DAY_PASSED_FEE = 0.01 ether; // Fee for paying back after due date
     // Structs and mappings ------------------------------------------------------------------------
 
     struct borrower {
@@ -153,6 +155,15 @@ contract Bank is AccessControl {
     }
 
     /**
+     * @notice This function allows a user to pay back borrowed funds with due day passed fee.
+     * @dev This function is called when the due date has passed and the borrower has to pay a fee.
+     */
+    function payBackWithDueDayPassedFee(uint256 _fee) external payable {
+        // Call the internal pay back with due day passed fee function
+        _payBackWithDueDayPassedFee(msg.sender, msg.value, _fee);
+    }
+
+    /**
      * @notice This function allows an admin to freeze an account.
      * @dev It sets the account's active status to false, preventing further transactions.
      * @dev Only addresses with ADMIN_ROLE can call this function.
@@ -184,9 +195,7 @@ contract Bank is AccessControl {
      * @return A boolean indicating whether the account is active or not.
      * @dev This function checks if the account is active.
      */
-    function _isAccountActive(
-        address _user
-    ) internal view isValidAddress(_user) returns (bool) {
+    function _isAccountActive(address _user) internal view isValidAddress(_user) returns (bool) {
         return s_accounts_active[_user]; // Check if the account is active
     }
 
@@ -229,9 +238,7 @@ contract Bank is AccessControl {
      * @param _borrower The address of the borrower.
      * @return bool Returns true if the borrower is eligible, false otherwise.
      */
-    function _isEligibleToBorrow(
-        address _borrower
-    ) internal view returns (bool) {
+    function _isEligibleToBorrow(address _borrower) internal view returns (bool) {
         // Check if the borrower has an active account
         return _isAccountActive(_borrower);
     }
@@ -243,13 +250,9 @@ contract Bank is AccessControl {
      * @notice Function to check if the borrower has reached the maximum borrow amount.
      * @dev It checks if the borrower's current borrowed amount plus the new amount exceeds the maximum borrow amount.
      */
-    function _isMaxBorrowAmountReached(
-        address _borrower,
-        uint256 _amount
-    ) internal view returns (bool) {
+    function _isMaxBorrowAmountReached(address _borrower, uint256 _amount) internal view returns (bool) {
         // Check if the borrower has reached the maximum borrow amount
-        return
-            borrowers[_borrower].borrowedAmount + _amount >= MAX_BORROW_AMOUNT;
+        return borrowers[_borrower].borrowedAmount + _amount >= MAX_BORROW_AMOUNT;
     }
 
     /**
@@ -260,9 +263,7 @@ contract Bank is AccessControl {
      * @dev Uses basis points for precision (10000 basis points = 100%).
      * @dev Interest is calculated as: (principal * rate * timeElapsed) / (BASIS_POINTS * SECONDS_IN_YEAR)
      */
-    function _calculateInterest(
-        address _borrower
-    ) internal view returns (uint256) {
+    function _calculateInterest(address _borrower) internal view returns (uint256) {
         uint256 principal = borrowers[_borrower].borrowedAmount;
         uint256 interestRate = borrowers[_borrower].interestRate;
         uint256 timeElapsed = block.timestamp - borrowers[_borrower].borrowAt;
@@ -274,9 +275,7 @@ contract Bank is AccessControl {
 
         // Calculate annualized interest with precision
         // Formula: (principal * rate * timeElapsed) / (BASIS_POINTS * SECONDS_IN_YEAR)
-        return
-            (principal * interestRate * timeElapsed) /
-            (BASIS_POINTS * SECONDS_IN_YEAR);
+        return (principal * interestRate * timeElapsed) / (BASIS_POINTS * SECONDS_IN_YEAR);
     }
 
     /**
@@ -290,10 +289,7 @@ contract Bank is AccessControl {
      * @dev It reverts if the borrower is not eligible or if the borrow amount exceeds
      * the maximum borrow amount.
      */
-    function _borrow(
-        address _borrower,
-        uint256 _amount
-    ) internal isValidAddress(_borrower) {
+    function _borrow(address _borrower, uint256 _amount) internal isValidAddress(_borrower) {
         // Check if the borrower is eligible to borrow
         if (!_isEligibleToBorrow(_borrower)) {
             revert Bank__NotEligibleToBorrow(); // Revert if the borrower is not eligible
@@ -326,12 +322,9 @@ contract Bank is AccessControl {
      * @notice Function to get how much has to be paid back by the borrower.
      * @dev It calculates the total amount to be paid back, including the principal and interest.
      */
-    function getHowMuchHasToBePaid(
-        address _borrower
-    ) external view returns (uint256) {
+    function getHowMuchHasToBePaid(address _borrower) external view returns (uint256) {
         // Calculate the total amount to be paid (principal + interest)
-        uint256 totalAmount = borrowers[_borrower].borrowedAmount +
-            _calculateInterest(_borrower);
+        uint256 totalAmount = borrowers[_borrower].borrowedAmount + _calculateInterest(_borrower);
         return totalAmount;
     }
 
@@ -341,10 +334,7 @@ contract Bank is AccessControl {
      * @dev It checks if the borrower has an active account and if the due date has not passed.
      * If the due date has passed, it reverts the transaction.
      */
-    function _payBack(
-        address _borrower,
-        uint256 _amount
-    ) internal isValidAddress(_borrower) {
+    function _payBack(address _borrower, uint256 _amount) internal isValidAddress(_borrower) {
         // Check if the borrower has an active account
         if (!_isAccountActive(_borrower)) {
             revert Bank__AccountNotActive(); // Revert if the account is not active
@@ -354,14 +344,45 @@ contract Bank is AccessControl {
             revert Bank__DueDatePassed(); // Revert if the due date has passed
         }
         // Calculate the total amount to pay back (principal + interest)
-        uint256 totalAmount = borrowers[_borrower].borrowedAmount +
-            _calculateInterest(_borrower);
+        uint256 totalAmount = borrowers[_borrower].borrowedAmount + _calculateInterest(_borrower);
         // Check if the amount to pay back is not equal to the total amount
         if (_amount != totalAmount) {
             revert Bank__AmountIsInsufficient(); // Revert if the amount to pay back is less than the total amount
         }
         // Transfer the total amount back to the bank
         i_bankAccount.receiveLoan{value: _amount}(_borrower, address(this));
+        // Update the borrower's details
+        borrowers[_borrower].borrowedAmount = 0;
+        borrowers[_borrower].interestRate = 0;
+        borrowers[_borrower].dueDate = 0;
+        borrowers[_borrower].borrowAt = 0;
+        // Emit an event for paying back
+        emit PaidBack(_borrower, totalAmount);
+    }
+
+    /**
+     * @param _borrower The address of the borrower.
+     * @param _amount The amount to pay back with due day passed fee.
+     * @notice Function to pay back borrowed funds with due day passed fee.
+     * @dev This function is called when the due date has passed and the borrower has to pay a fee.
+     */
+    function _payBackWithDueDayPassedFee(address _borrower, uint256 _amount, uint256 _fee)
+        internal
+        isValidAddress(_borrower)
+    {
+        // Check if the fee is sufficient
+        if (_fee < DUE_DAY_PASSED_FEE) {
+            revert Bank__InsufficientDueDayPassedFee(); // Revert if the fee is insufficient
+        }
+        // Calculate the total amount to pay back (principal + interest)
+        uint256 totalAmount = borrowers[_borrower].borrowedAmount + _calculateInterest(_borrower);
+        // Check if the amount to pay back is not equal to the total amount
+        if (_amount != totalAmount) {
+            revert Bank__AmountIsInsufficient(); // Revert if the amount to pay back is less than the total amount
+        }
+        // Transfer the total amount back to the bank
+        i_bankAccount.receiveLoan{value: _amount + _fee}(_borrower, address(this));
+
         // Update the borrower's details
         borrowers[_borrower].borrowedAmount = 0;
         borrowers[_borrower].interestRate = 0;
@@ -418,9 +439,7 @@ contract Bank is AccessControl {
      * @notice Function to get the borrower's details.
      * @dev Returns the borrower's details including borrowed amount, interest rate, borrow time, and due date.
      */
-    function getBorrowerDetails(
-        address _borrower
-    ) external view returns (borrower memory) {
+    function getBorrowerDetails(address _borrower) external view returns (borrower memory) {
         // Return the borrower's details
         return borrowers[_borrower];
     }
@@ -434,25 +453,22 @@ contract Bank is AccessControl {
      * @notice Function to get the borrower's details as individual values
      * @dev Returns individual values from the borrower struct for easier destructuring
      */
-    function getBorrowerDetailsValues(
-        address _borrower
-    )
+    function getBorrowerDetailsValues(address _borrower)
         external
         view
-        returns (
-            uint256 borrowedAmount,
-            uint256 interestRate,
-            uint256 borrowAt,
-            uint256 dueDate
-        )
+        returns (uint256 borrowedAmount, uint256 interestRate, uint256 borrowAt, uint256 dueDate)
     {
         borrower memory borrowerInfo = borrowers[_borrower];
-        return (
-            borrowerInfo.borrowedAmount,
-            borrowerInfo.interestRate,
-            borrowerInfo.borrowAt,
-            borrowerInfo.dueDate
-        );
+        return (borrowerInfo.borrowedAmount, borrowerInfo.interestRate, borrowerInfo.borrowAt, borrowerInfo.dueDate);
+    }
+
+    /**
+     * @notice Function to get the due day passed fee.
+     * @dev This function returns the fee that is charged if the borrower pays back after the due date.
+     * @return uint256 The due day passed fee
+     */
+    function getDueDayPassedFee() external pure returns (uint256) {
+        return DUE_DAY_PASSED_FEE; // Return the due day passed fee
     }
 
     /**
@@ -461,9 +477,7 @@ contract Bank is AccessControl {
      * @notice Public wrapper function to test the internal _calculateInterest function
      * @dev This function is only meant for testing purposes to access the internal _calculateInterest function
      */
-    function calculateInterestForTesting(
-        address _borrower
-    ) external view returns (uint256) {
+    function calculateInterestForTesting(address _borrower) external view returns (uint256) {
         return _calculateInterest(_borrower);
     }
 
