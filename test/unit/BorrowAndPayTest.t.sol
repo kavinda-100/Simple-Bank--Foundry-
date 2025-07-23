@@ -63,7 +63,10 @@ contract BorrowAndPayTest is Test {
         vm.startPrank(user1);
 
         // Check if the borrower has an active account
-        assertTrue(bank.isAccountActive(user1), "User1's account should be active before borrowing");
+        assertTrue(
+            bank.isAccountActive(user1),
+            "User1's account should be active before borrowing"
+        );
 
         // User borrows 5 ether
         uint256 borrowAmount = 5 ether;
@@ -171,7 +174,10 @@ contract BorrowAndPayTest is Test {
     /**
      * @dev Test if the borrower details are correct after borrowing.
      */
-    function test_BorrowerDetailsAfterBorrowing() public createAnAccount(user1) {
+    function test_BorrowerDetailsAfterBorrowing()
+        public
+        createAnAccount(user1)
+    {
         // Start prank as user1
         vm.startPrank(user1);
 
@@ -181,10 +187,25 @@ contract BorrowAndPayTest is Test {
 
         // Option 1: Using struct directly
         Bank.borrower memory borrowerDetails = bank.getBorrowerDetails(user1);
-        assertEq(borrowerDetails.borrowedAmount, borrowAmount, "Borrowed amount should match");
-        assertTrue(borrowerDetails.dueDate > block.timestamp, "Due date should be in the future");
-        assertGt(borrowerDetails.interestRate, 0, "Interest rate should be greater than 0");
-        assertEq(borrowerDetails.borrowAt, block.timestamp, "Borrow timestamp should match current timestamp");
+        assertEq(
+            borrowerDetails.borrowedAmount,
+            borrowAmount,
+            "Borrowed amount should match"
+        );
+        assertTrue(
+            borrowerDetails.dueDate > block.timestamp,
+            "Due date should be in the future"
+        );
+        assertGt(
+            borrowerDetails.interestRate,
+            0,
+            "Interest rate should be greater than 0"
+        );
+        assertEq(
+            borrowerDetails.borrowAt,
+            block.timestamp,
+            "Borrow timestamp should match current timestamp"
+        );
 
         vm.stopPrank();
     }
@@ -201,13 +222,24 @@ contract BorrowAndPayTest is Test {
         bank.borrow(borrowAmount);
 
         // Option 2: Using destructuring with new function
-        (uint256 borrowedAmount, uint256 interestRate, uint256 borrowAt, uint256 dueDate) =
-            bank.getBorrowerDetailsValues(user1);
+        (
+            uint256 borrowedAmount,
+            uint256 interestRate,
+            uint256 borrowAt,
+            uint256 dueDate
+        ) = bank.getBorrowerDetailsValues(user1);
 
         assertEq(borrowedAmount, borrowAmount, "Borrowed amount should match");
-        assertTrue(dueDate > block.timestamp, "Due date should be in the future");
+        assertTrue(
+            dueDate > block.timestamp,
+            "Due date should be in the future"
+        );
         assertGt(interestRate, 0, "Interest rate should be greater than 0");
-        assertEq(borrowAt, block.timestamp, "Borrow timestamp should match current timestamp");
+        assertEq(
+            borrowAt,
+            block.timestamp,
+            "Borrow timestamp should match current timestamp"
+        );
 
         vm.stopPrank();
     }
@@ -221,7 +253,9 @@ contract BorrowAndPayTest is Test {
         vm.startPrank(user1);
 
         // Check if the user can borrow a zero amount
-        vm.expectRevert(BankAccount.BankAccount__LoanAmountMustBeGreaterThanZero.selector);
+        vm.expectRevert(
+            BankAccount.BankAccount__LoanAmountMustBeGreaterThanZero.selector
+        );
         bank.borrow(0);
 
         vm.stopPrank();
@@ -268,17 +302,31 @@ contract BorrowAndPayTest is Test {
         console2.log("User1 paid back the loan", owedAmount, "wei");
 
         // Check if the loan is fully paid back
-        (uint256 borrowedAmount, uint256 interestRate, uint256 borrowAt, uint256 dueDate) =
-            bank.getBorrowerDetailsValues(user1);
+        (
+            uint256 borrowedAmount,
+            uint256 interestRate,
+            uint256 borrowAt,
+            uint256 dueDate
+        ) = bank.getBorrowerDetailsValues(user1);
         assertEq(borrowedAmount, 0, "Remaining debt should be zero");
-        assertEq(interestRate, 0, "Interest rate should be zero after paying back");
-        assertEq(borrowAt, 0, "Borrow timestamp should be reset after paying back");
+        assertEq(
+            interestRate,
+            0,
+            "Interest rate should be zero after paying back"
+        );
+        assertEq(
+            borrowAt,
+            0,
+            "Borrow timestamp should be reset after paying back"
+        );
         assertEq(dueDate, 0, "Due date should be reset after paying back");
 
         // check if the User1 balance is updated correctly
         assertEq(
             address(user1).balance,
-            (USER_INITIAL_BALANCE - USER_DEPOSIT_AMOUNT) + borrowAmount - owedAmount,
+            (USER_INITIAL_BALANCE - USER_DEPOSIT_AMOUNT) +
+                borrowAmount -
+                owedAmount,
             "User1's balance should be updated after paying back the loan"
         );
         // Check if the BankAccount contract balance is updated correctly
@@ -290,6 +338,7 @@ contract BorrowAndPayTest is Test {
 
         vm.stopPrank();
     }
+
     /**
      * @dev Test to verify that a user emits the PaidBack event with correct parameters when paying back a loan.
      */
@@ -342,6 +391,21 @@ contract BorrowAndPayTest is Test {
 
         // User pays back the loan
         bank.payBack{value: owedAmount}();
+
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test to verify User can not payback a loan if they don't have an active account.
+     * it revert with Bank__AccountNotActive.
+     */
+    function test_PayBackLoanWithoutActiveAccount() public {
+        // Start prank as user1
+        vm.startPrank(user1);
+
+        // Check if the user can pay back a loan without an active account
+        vm.expectRevert(Bank.Bank__AccountNotActive.selector);
+        bank.payBack{value: 1 ether}();
 
         vm.stopPrank();
     }
