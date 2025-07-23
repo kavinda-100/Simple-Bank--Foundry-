@@ -112,7 +112,11 @@ contract BankAccount is AccessControl {
      * @notice This function allows the caller to transfer funds from their account to another account.
      * @dev It checks if both accounts are active and if the balance is sufficient before proceeding with the transfer.
      */
-    function transferFunds(address _from, address _to, uint256 _amount) external {
+    function transferFunds(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) external {
         // Call the internal transfer funds function
         _transferFunds(_from, _to, _amount);
     }
@@ -123,12 +127,11 @@ contract BankAccount is AccessControl {
      * @notice This function allows the caller to pay a loan for a borrower.
      * @dev It checks if the amount is greater than zero and if the contract has sufficient balance before proceeding with the payment.
      */
-    function payLoan(address _borrower, uint256 _amount, address _admin)
-        external
-        isValidAddress(_borrower)
-        onlyAdmin(_admin)
-        returns (bool)
-    {
+    function payLoan(
+        address _borrower,
+        uint256 _amount,
+        address _admin
+    ) external isValidAddress(_borrower) onlyAdmin(_admin) returns (bool) {
         // Ensure the amount is greater than zero
         if (_amount <= 0) {
             revert BankAccount__LoanAmountMustBeGreaterThanZero(); // Revert if the amount is zero or negative
@@ -138,23 +141,22 @@ contract BankAccount is AccessControl {
             revert BankAccount__InsufficientBalance(); // Revert if the contract has insufficient balance
         }
         // Withdraw the amount from the borrower's account
-        (bool success,) = payable(_borrower).call{value: _amount}("");
+        (bool success, ) = payable(_borrower).call{value: _amount}("");
         // success is checked by Bank contract
         // emit an event indicating the loan payment
         emit LoanPaid(_borrower, _amount);
         return success;
     }
 
-    function receiveLoan(address _borrower, address _admin)
-        external
-        payable
-        isValidAddress(_borrower)
-        onlyAdmin(_admin)
-    {
+    function receiveLoan(
+        address _borrower,
+        address _admin
+    ) external payable isValidAddress(_borrower) onlyAdmin(_admin) {
         // check if the borrower has an account
-        if (s_balances[_borrower] == 0) {
-            revert BankAccount__BorrowerDoesNotExist(); // Revert if the borrower does not exist
-        }
+        // (not possible to get this error, because it revert in the Bank contract if we pass the wrong address)
+        // if (s_balances[_borrower] == 0) {
+        //     revert BankAccount__BorrowerDoesNotExist(); // Revert if the borrower does not exist
+        // }
         // Emit an event indicating the loan reception
         emit LoanReceived(_borrower, msg.value);
     }
@@ -164,7 +166,9 @@ contract BankAccount is AccessControl {
      * @notice This function allows the current admin to grant admin role to the Bank contract.
      * @dev Only the current admin can call this function.
      */
-    function grantAdminRoleToBank(address _bankAddress) external isValidAddress(_bankAddress) onlyAdmin(msg.sender) {
+    function grantAdminRoleToBank(
+        address _bankAddress
+    ) external isValidAddress(_bankAddress) onlyAdmin(msg.sender) {
         // Grant admin role to the Bank contract
         _grantRole(DEFAULT_ADMIN_ROLE, _bankAddress);
     }
@@ -177,7 +181,10 @@ contract BankAccount is AccessControl {
      * @notice This function creates an account for the user if it does not exist and deposits funds into it.
      * @dev It checks if the amount is greater than MINIMUM_BALANCE before proceeding with the deposit.
      */
-    function _createAccount(address _user, uint256 _amount) internal isValidAddress(_user) {
+    function _createAccount(
+        address _user,
+        uint256 _amount
+    ) internal isValidAddress(_user) {
         // Check if the account already exists
         if (s_balances[_user] > 0) {
             revert BankAccount__AccountAlreadyExists(); // Revert if the account already exists
@@ -198,7 +205,10 @@ contract BankAccount is AccessControl {
      * @dev This function deposits funds into the specified account.
      * It checks if the amount is greater than zero before proceeding with the deposit.
      */
-    function _deposit(address _user, uint256 _amount) internal isValidAddress(_user) {
+    function _deposit(
+        address _user,
+        uint256 _amount
+    ) internal isValidAddress(_user) {
         // Ensure the deposit amount is greater than zero
         if (_amount <= 0) {
             revert BankAccount__DepositAmountMustBeGreaterThanZero();
@@ -215,7 +225,10 @@ contract BankAccount is AccessControl {
      * @dev This function withdraws funds from the specified account.
      * It checks if the account is active and if the balance is sufficient before proceeding with the withdrawal.
      */
-    function _withdraw(address _user, uint256 _amount) internal isValidAddress(_user) {
+    function _withdraw(
+        address _user,
+        uint256 _amount
+    ) internal isValidAddress(_user) {
         // Ensure the withdrawal amount does not exceed the balance
         if (s_balances[_user] < _amount) {
             revert BankAccount__InsufficientBalance(); // Revert if insufficient balance
@@ -223,7 +236,7 @@ contract BankAccount is AccessControl {
         // Withdraw the amount from the account
         s_balances[_user] -= _amount;
         // transfer the amount to the owner
-        (bool success,) = payable(_user).call{value: _amount}("");
+        (bool success, ) = payable(_user).call{value: _amount}("");
         // Check if the transfer was successful
         if (!success) {
             revert BankAccount__TransferFailed(); // Revert if the transfer fails
@@ -239,11 +252,11 @@ contract BankAccount is AccessControl {
      * @dev This function transfers funds from one account to another.
      * It checks if both accounts are active and if the balance is sufficient before proceeding with the transfer.
      */
-    function _transferFunds(address _from, address _to, uint256 _amount)
-        internal
-        isValidAddress(_from)
-        isValidAddress(_to)
-    {
+    function _transferFunds(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) internal isValidAddress(_from) isValidAddress(_to) {
         // Ensure the withdrawal amount does not exceed the balance
         if (s_balances[_from] < _amount) {
             revert BankAccount__InsufficientBalance(); // Revert if insufficient balance
@@ -264,7 +277,9 @@ contract BankAccount is AccessControl {
      * @notice This function is external and can be called by anyone to check the balance of an account.
      * @dev It returns the balance of the specified account owner.
      */
-    function getBalance(address _user) external view isValidAddress(_user) returns (uint256) {
+    function getBalance(
+        address _user
+    ) external view isValidAddress(_user) returns (uint256) {
         return s_balances[_user];
     }
 
