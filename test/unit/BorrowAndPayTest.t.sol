@@ -409,4 +409,29 @@ contract BorrowAndPayTest is Test {
 
         vm.stopPrank();
     }
+
+    /**
+     * @dev Test to verify the user can not pay if the loan due date has passed.
+     * it revert with Bank__DueDatePassed.
+     */
+    function test_PayBackLoanAfterDueDate() public createAnAccount(user1) {
+        // Start prank as user1
+        vm.startPrank(user1);
+
+        // User borrows 5 ether
+        uint256 borrowAmount = 5 ether;
+        bank.borrow(borrowAmount);
+
+        // warp to simulate time passing beyond due date
+        vm.warp(block.timestamp + 31 days);
+
+        // Check how much the user owes
+        uint256 owedAmount = bank.getHowMuchHasToBePaid(user1);
+
+        // Check if the user can pay back a loan after the due date
+        vm.expectRevert(Bank.Bank__DueDatePassed.selector);
+        bank.payBack{value: owedAmount}();
+
+        vm.stopPrank();
+    }
 }
