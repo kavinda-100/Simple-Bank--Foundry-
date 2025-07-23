@@ -26,8 +26,10 @@ contract BorrowAndPayTest is Test {
     // Events --------------------------------------------------------------------------------------
     event Borrowed(address indexed borrower, uint256 amount, uint256 dueDate); // Event emitted when a user borrows funds
     event LoanPaid(address indexed borrower, uint256 amount); // Event emitted when a loan is paid
+    event PaidBack(address indexed borrower, uint256 amount); // Event emitted when a user pays back borrowed funds
+    event LoanReceived(address indexed borrower, uint256 amount); // Event emitted when a loan is received.
 
-     function setUp() public {
+    function setUp() public {
         // Deploy complete Bank system using deployment script
         DeployBankSystem deployBankSystemScript = new DeployBankSystem();
         (bankAccount, bank, deployer) = deployBankSystemScript.run();
@@ -67,9 +69,12 @@ contract BorrowAndPayTest is Test {
         uint256 borrowAmount = 5 ether;
         bank.borrow(borrowAmount);
 
-
         // Check if the borrower's balance is updated correctly
-        assertEq(address(user1).balance, (USER_INITIAL_BALANCE - USER_DEPOSIT_AMOUNT) + borrowAmount, "User1's balance should be updated after borrowing");
+        assertEq(
+            address(user1).balance,
+            (USER_INITIAL_BALANCE - USER_DEPOSIT_AMOUNT) + borrowAmount,
+            "User1's balance should be updated after borrowing"
+        );
 
         vm.stopPrank();
     }
@@ -196,11 +201,9 @@ contract BorrowAndPayTest is Test {
         bank.borrow(borrowAmount);
 
         // Option 2: Using destructuring with new function
-        (uint256 borrowedAmount,
-         uint256 interestRate,
-         uint256 borrowAt,
-         uint256 dueDate) = bank.getBorrowerDetailsValues(user1);
-         
+        (uint256 borrowedAmount, uint256 interestRate, uint256 borrowAt, uint256 dueDate) =
+            bank.getBorrowerDetailsValues(user1);
+
         assertEq(borrowedAmount, borrowAmount, "Borrowed amount should match");
         assertTrue(dueDate > block.timestamp, "Due date should be in the future");
         assertGt(interestRate, 0, "Interest rate should be greater than 0");
@@ -265,18 +268,81 @@ contract BorrowAndPayTest is Test {
         console2.log("User1 paid back the loan", owedAmount, "wei");
 
         // Check if the loan is fully paid back
-        (uint256 borrowedAmount, uint256 interestRate, uint256 borrowAt, uint256 dueDate) = bank.getBorrowerDetailsValues(user1);
+        (uint256 borrowedAmount, uint256 interestRate, uint256 borrowAt, uint256 dueDate) =
+            bank.getBorrowerDetailsValues(user1);
         assertEq(borrowedAmount, 0, "Remaining debt should be zero");
         assertEq(interestRate, 0, "Interest rate should be zero after paying back");
         assertEq(borrowAt, 0, "Borrow timestamp should be reset after paying back");
         assertEq(dueDate, 0, "Due date should be reset after paying back");
 
         // check if the User1 balance is updated correctly
-        assertEq(address(user1).balance, (USER_INITIAL_BALANCE - USER_DEPOSIT_AMOUNT) + borrowAmount - owedAmount, "User1's balance should be updated after paying back the loan");
+        assertEq(
+            address(user1).balance,
+            (USER_INITIAL_BALANCE - USER_DEPOSIT_AMOUNT) + borrowAmount - owedAmount,
+            "User1's balance should be updated after paying back the loan"
+        );
         // Check if the BankAccount contract balance is updated correctly
-        assertEq(address(bankAccount).balance, (USER_DEPOSIT_AMOUNT - borrowAmount) + owedAmount, "BankAccount balance should be updated after paying back the loan");
+        assertEq(
+            address(bankAccount).balance,
+            (USER_DEPOSIT_AMOUNT - borrowAmount) + owedAmount,
+            "BankAccount balance should be updated after paying back the loan"
+        );
+
+        vm.stopPrank();
+    }
+    /**
+     * @dev Test to verify that a user emits the PaidBack event with correct parameters when paying back a loan.
+     */
+
+    function test_PaidBackEvent() public createAnAccount(user1) {
+        // Start prank as user1
+        vm.startPrank(user1);
+
+        // User borrows 5 ether
+        uint256 borrowAmount = 5 ether;
+        bank.borrow(borrowAmount);
+
+        // warp to simulate time passing
+        vm.warp(block.timestamp + 15 days);
+
+        // Check how much the user owes
+        uint256 owedAmount = bank.getHowMuchHasToBePaid(user1);
+
+        // Expect the PaidBack event to be emitted when the loan is paid back
+        vm.expectEmit(true, false, false, true);
+        emit PaidBack(user1, owedAmount);
+
+        // User pays back the loan
+        bank.payBack{value: owedAmount}();
 
         vm.stopPrank();
     }
 
+    /**
+     * @dev Test to verify that a user emits the LoanReceived event with correct parameters when receiving a loan.
+     */
+    function test_LoanReceivedEvent() public createAnAccount(user1) {
+        // Start prank as user1
+        vm.startPrank(user1);
+
+        // User borrows 5 ether
+        uint256 borrowAmount = 5 ether;
+        bank.borrow(borrowAmount);
+
+        // warp to simulate time passing
+        vm.warp(block.timestamp + 15 days);
+
+        // Check how much the user owes
+        uint256 owedAmount = bank.getHowMuchHasToBePaid(user1);
+
+        // Expect the LoanReceived event to be emitted when the loan is received
+        // The event should emit the actual amount received (owedAmount), not the original borrowed amount
+        vm.expectEmit(true, false, false, true);
+        emit LoanReceived(user1, owedAmount);
+
+        // User pays back the loan
+        bank.payBack{value: owedAmount}();
+
+        vm.stopPrank();
+    }
 }
