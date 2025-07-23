@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
+
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IBankAccount} from "./interfaces/IBankAccount.sol";
 import {BankAccount} from "./BankAccount.sol";
@@ -12,7 +13,6 @@ import {BankAccount} from "./BankAccount.sol";
  * @notice this contract responsibilities to handle the borrow and payback of funds logics.
  */
 contract Bank is AccessControl {
-
     // Custom Errors --------------------------------------------------------------------------------
     error Bank__InvalidAddress();
     error Bank__NotEligibleToBorrow();
@@ -39,12 +39,14 @@ contract Bank is AccessControl {
     uint256 private constant BASIS_POINTS = 10000; // 1 basis point = 0.01%
     uint256 private constant SECONDS_IN_YEAR = 365 days; // Seconds in a year for annualized interest
     // Structs and mappings ------------------------------------------------------------------------
+
     struct borrower {
         uint256 borrowedAmount;
         uint256 interestRate;
         uint256 borrowAt;
         uint256 dueDate;
     } // Struct to hold borrower details
+
     mapping(address => borrower) private borrowers; // Mapping to track borrowers and their details
 
     /**
@@ -70,7 +72,7 @@ contract Bank is AccessControl {
      */
     modifier isValidAddress(address _user) {
         // Check if the user address is valid
-        if(_user == address(0)) {
+        if (_user == address(0)) {
             revert Bank__InvalidAddress(); // Revert if the user address is invalid
         }
         _;
@@ -82,7 +84,7 @@ contract Bank is AccessControl {
      */
     modifier onlyAdmin() {
         // Check if the caller has the admin role
-        if(!hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
+        if (!hasRole(DEFAULT_ADMIN_ROLE, msg.sender)) {
             revert Bank__UnAuthorized(); // Revert if the caller is not an admin
         }
         _;
@@ -146,7 +148,6 @@ contract Bank is AccessControl {
     function payBack() external payable {
         // Call the internal pay back function
         _payBack(msg.sender, msg.value);
-
     }
 
     /**
@@ -176,7 +177,7 @@ contract Bank is AccessControl {
      * @return A boolean indicating whether the account is active or not.
      * @dev This function checks if the account is active.
      */
-    function _isAccountActive(address _user) internal isValidAddress(_user) view returns (bool)  {
+    function _isAccountActive(address _user) internal view isValidAddress(_user) returns (bool) {
         return s_accounts_active[_user]; // Check if the account is active
     }
 
@@ -248,12 +249,12 @@ contract Bank is AccessControl {
         uint256 principal = borrowers[_borrower].borrowedAmount;
         uint256 interestRate = borrowers[_borrower].interestRate;
         uint256 timeElapsed = block.timestamp - borrowers[_borrower].borrowAt;
-        
+
         // Handle edge case where no time has passed
         if (timeElapsed == 0 || principal == 0) {
             return 0;
         }
-        
+
         // Calculate annualized interest with precision
         // Formula: (principal * rate * timeElapsed) / (BASIS_POINTS * SECONDS_IN_YEAR)
         return (principal * interestRate * timeElapsed) / (BASIS_POINTS * SECONDS_IN_YEAR);
@@ -272,11 +273,11 @@ contract Bank is AccessControl {
      */
     function _borrow(address _borrower, uint256 _amount) internal isValidAddress(_borrower) {
         // Check if the borrower is eligible to borrow
-        if(!_isEligibleToBorrow(_borrower)) {
+        if (!_isEligibleToBorrow(_borrower)) {
             revert Bank__NotEligibleToBorrow(); // Revert if the borrower is not eligible
         }
         // Check if the maximum borrow amount is reached
-        if(_isMaxBorrowAmountReached(_borrower, _amount)) {
+        if (_isMaxBorrowAmountReached(_borrower, _amount)) {
             revert Bank__MaxBorrowAmountReached(); // Revert if the maximum borrow amount is reached
         }
         // Update the borrower's details
@@ -317,17 +318,17 @@ contract Bank is AccessControl {
      */
     function _payBack(address _borrower, uint256 _amount) internal isValidAddress(_borrower) {
         // Check if the borrower has an active account
-        if(!_isAccountActive(_borrower)) {
+        if (!_isAccountActive(_borrower)) {
             revert Bank__AccountNotActive(); // Revert if the account is not active
         }
         // Check if the due date has passed
-        if(block.timestamp > borrowers[_borrower].dueDate) {
+        if (block.timestamp > borrowers[_borrower].dueDate) {
             revert Bank__DueDatePassed(); // Revert if the due date has passed
         }
         // Calculate the total amount to pay back (principal + interest)
         uint256 totalAmount = borrowers[_borrower].borrowedAmount + _calculateInterest(_borrower);
         // Check if the amount to pay back is not equal to the total amount
-        if(_amount != totalAmount) {
+        if (_amount != totalAmount) {
             revert Bank__AmountIsInsufficient(); // Revert if the amount to pay back is less than the total amount
         }
         // Transfer the total amount back to the bank
@@ -341,7 +342,6 @@ contract Bank is AccessControl {
         emit PaidBack(_borrower, totalAmount);
     }
 
-
     // View functions ------------------------------------------------------------------------------
 
     /**
@@ -354,7 +354,7 @@ contract Bank is AccessControl {
         // Call the bank account contract to get the balance of the user
         return i_bankAccount.getBalance(_user);
     }
-    
+
     /**
      * @return The owner of the bank contract.
      * @notice This function is external and can be called by anyone to get the owner of the bank contract.
@@ -403,7 +403,11 @@ contract Bank is AccessControl {
      * @notice Function to get the borrower's details as individual values
      * @dev Returns individual values from the borrower struct for easier destructuring
      */
-    function getBorrowerDetailsValues(address _borrower) external view returns (uint256 borrowedAmount, uint256 interestRate, uint256 borrowAt, uint256 dueDate) {
+    function getBorrowerDetailsValues(address _borrower)
+        external
+        view
+        returns (uint256 borrowedAmount, uint256 interestRate, uint256 borrowAt, uint256 dueDate)
+    {
         borrower memory borrowerInfo = borrowers[_borrower];
         return (borrowerInfo.borrowedAmount, borrowerInfo.interestRate, borrowerInfo.borrowAt, borrowerInfo.dueDate);
     }
@@ -413,5 +417,4 @@ contract Bank is AccessControl {
         // Bank can receive ETH to forward to BankAccount
         i_bankAccount.deposit{value: msg.value}(msg.sender);
     }
-
 }

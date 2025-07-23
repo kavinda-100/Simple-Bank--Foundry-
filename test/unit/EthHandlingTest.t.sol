@@ -14,7 +14,7 @@ contract EthHandlingTest is Test {
     Bank public bank;
     BankAccount public bankAccount;
     address public deployer;
-    
+
     // Addresses for test users
     address public user1 = address(0x123);
     address public user2 = address(0x456);
@@ -28,12 +28,12 @@ contract EthHandlingTest is Test {
     event Transfer(address indexed from, address indexed to, uint256 amount); // Event emitted when funds are transferred
     event CreateAnAccount(address indexed owner, uint256 amount); // Event emitted when an account is created
     event AccountActivated(address indexed owner); // Event emitted when an account is activated
-    
+
     function setUp() public {
         // Deploy complete Bank system using deployment script
         DeployBankSystem deployBankSystemScript = new DeployBankSystem();
         (bankAccount, bank, deployer) = deployBankSystemScript.run();
-        
+
         // Give test users some ETH to work with
         vm.deal(user1, 10 ether);
         vm.deal(user2, 10 ether);
@@ -62,6 +62,7 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify creating an account emits CreateAnAccount event
      */
+
     function test_CreateAccountEventEmitted() public {
         console.log("=== Create Account Event Emitted Test ===");
         vm.startPrank(user1);
@@ -130,25 +131,25 @@ contract EthHandlingTest is Test {
     function test_DepositEthDirectly() public {
         console.log("=== Deposit ETH Directly to BankAccount Contract Test ===");
         vm.startPrank(user1);
-        
+
         uint256 depositAmount = 1 ether;
         uint256 initialBalance = user1.balance;
-        
+
         // Deposit ETH directly to BankAccount
         bankAccount.deposit{value: depositAmount}(user1);
-        
+
         // Check user's ETH balance decreased
         assertEq(user1.balance, initialBalance - depositAmount);
-        
+
         // Check user's account balance increased
         assertEq(bankAccount.getBalance(user1), depositAmount);
-        
+
         // Check contract received the ETH
         assertEq(address(bankAccount).balance, depositAmount);
-        
+
         vm.stopPrank();
     }
-    
+
     /**
      * @dev Test to verify ETH deposit through Bank contract
      */
@@ -156,7 +157,7 @@ contract EthHandlingTest is Test {
         console.log("=== Deposit ETH Through Bank Contract Test ===");
 
         vm.startPrank(user1);
-        
+
         uint256 depositAmount = 2 ether;
         uint256 initialBalance = user1.balance;
 
@@ -164,25 +165,25 @@ contract EthHandlingTest is Test {
         console.log("User1 initial balance:", initialBalance);
         console.log("BankAccount initial balance:", address(bankAccount).balance);
         console.log("Bank initial balance:", address(bank).balance);
-        
+
         // Deposit ETH through Bank contract
         bank.deposit{value: depositAmount}();
-        
+
         console.log("After deposit: ===================");
         console.log("User1 balance:", user1.balance);
         console.log("User1 account balance:", bankAccount.getBalance(user1));
         console.log("BankAccount contract balance:", address(bankAccount).balance);
         console.log("Bank contract balance:", address(bank).balance);
-        
+
         // Check user's ETH balance decreased
         assertEq(user1.balance, initialBalance - depositAmount);
-        
+
         // Check user's account balance increased
         assertEq(bankAccount.getBalance(user1), depositAmount);
-        
+
         // Check BankAccount contract received the ETH
         assertEq(address(bankAccount).balance, depositAmount);
-        
+
         vm.stopPrank();
     }
 
@@ -191,18 +192,18 @@ contract EthHandlingTest is Test {
      */
     function test_DepositEventEmitted() public {
         console.log("=== Deposit Event Emitted Test ===");
-        
+
         vm.startPrank(user1);
-        
+
         uint256 depositAmount = 1 ether;
 
         // Expect Deposit event to be emitted
         vm.expectEmit(true, false, false, true);
         emit Deposit(user1, depositAmount);
-        
+
         // Deposit ETH through BankAccount
         bank.deposit{value: depositAmount}();
-        
+
         vm.stopPrank();
     }
 
@@ -211,15 +212,15 @@ contract EthHandlingTest is Test {
      */
     function test_SendZeroEthReverts() public {
         console.log("=== Send 0 ETH to BankAccount Reverts Test ===");
-        
+
         vm.startPrank(user1);
-        
+
         // Expect revert when sending 0 ETH
         vm.expectRevert(BankAccount.BankAccount__DepositAmountMustBeGreaterThanZero.selector);
 
         // Attempt to deposit 0 ETH
         bank.deposit{value: 0}();
-        
+
         vm.stopPrank();
     }
 
@@ -228,17 +229,17 @@ contract EthHandlingTest is Test {
      */
     function test_ValidUserAddressOnDeposit() public {
         console.log("=== Valid User Address on Deposit Test ===");
-        
+
         vm.startPrank(user1);
-        
+
         uint256 depositAmount = 1 ether;
-        
+
         // Expect revert if user address is zero
         vm.expectRevert(BankAccount.BankAccount__InvalidAddress.selector);
-        
+
         // Attempt to deposit with zero address
         bankAccount.deposit{value: depositAmount}(address(0));
-        
+
         vm.stopPrank();
     }
 
@@ -287,15 +288,15 @@ contract EthHandlingTest is Test {
      */
     function test_WithdrawInsufficientBalanceReverts() public {
         console.log("=== Withdraw Insufficient Balance Reverts Test ===");
-        
+
         vm.startPrank(user1);
-        
+
         // Expect revert if trying to withdraw more than balance (this user has no balance yet)
         vm.expectRevert(BankAccount.BankAccount__InsufficientBalance.selector);
-        
+
         // Attempt to withdraw more than deposited amount
         bank.withdraw(1 ether);
-        
+
         vm.stopPrank();
     }
 
@@ -304,9 +305,9 @@ contract EthHandlingTest is Test {
      */
     function test_WithdrawalEventEmitted() public {
         console.log("=== Withdrawal Event Emitted Test ===");
-        
+
         vm.startPrank(user1);
-        
+
         uint256 depositAmount = 1 ether;
         uint256 withdrawAmount = 0.5 ether;
 
@@ -316,7 +317,7 @@ contract EthHandlingTest is Test {
         // Expect Withdrawal event to be emitted
         vm.expectEmit(true, false, false, true);
         emit Withdrawal(user1, withdrawAmount);
-        
+
         // Withdraw ETH from BankAccount
         bank.withdraw(withdrawAmount);
 
@@ -330,15 +331,15 @@ contract EthHandlingTest is Test {
         console.log("=== Valid User Address on Withdraw Test ===");
 
         vm.startPrank(user1);
-        
+
         uint256 depositAmount = 1 ether;
-        
+
         // Expect revert if user address is zero
         vm.expectRevert(BankAccount.BankAccount__InvalidAddress.selector);
 
         // Attempt to withdraw with zero address
         bankAccount.withdraw(address(0), depositAmount);
-        
+
         vm.stopPrank();
     }
 
@@ -349,9 +350,9 @@ contract EthHandlingTest is Test {
      */
     function test_TransferFundsBetweenAccounts() public {
         console.log("=== Transfer Funds Between Accounts Test ===");
-        
+
         vm.startPrank(user1);
-        
+
         uint256 depositAmount = 2 ether;
         uint256 transferAmount = 1 ether;
 
@@ -387,15 +388,15 @@ contract EthHandlingTest is Test {
      */
     function test_TransferInsufficientBalanceReverts() public {
         console.log("=== Transfer Insufficient Balance Reverts Test ===");
-        
+
         vm.startPrank(user1);
-        
+
         // Expect revert if trying to transfer more than balance (this user has no balance yet)
         vm.expectRevert(BankAccount.BankAccount__InsufficientBalance.selector);
-        
+
         // Attempt to transfer more than deposited amount
         bank.transferFunds(user2, 1 ether);
-        
+
         vm.stopPrank();
     }
 
@@ -499,7 +500,6 @@ contract EthHandlingTest is Test {
         bankAccount.getBalance(address(0));
 
         vm.stopPrank();
-
     }
 
     /**
@@ -518,5 +518,4 @@ contract EthHandlingTest is Test {
 
         vm.stopPrank();
     }
-
 }
