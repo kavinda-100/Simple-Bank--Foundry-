@@ -63,10 +63,7 @@ contract BorrowAndPayTest is Test {
         vm.startPrank(user1);
 
         // Check if the borrower has an active account
-        assertTrue(
-            bank.isAccountActive(user1),
-            "User1's account should be active before borrowing"
-        );
+        assertTrue(bank.isAccountActive(user1), "User1's account should be active before borrowing");
 
         // User borrows 5 ether
         uint256 borrowAmount = 5 ether;
@@ -174,10 +171,7 @@ contract BorrowAndPayTest is Test {
     /**
      * @dev Test if the borrower details are correct after borrowing.
      */
-    function test_BorrowerDetailsAfterBorrowing()
-        public
-        createAnAccount(user1)
-    {
+    function test_BorrowerDetailsAfterBorrowing() public createAnAccount(user1) {
         // Start prank as user1
         vm.startPrank(user1);
 
@@ -187,25 +181,10 @@ contract BorrowAndPayTest is Test {
 
         // Option 1: Using struct directly
         Bank.borrower memory borrowerDetails = bank.getBorrowerDetails(user1);
-        assertEq(
-            borrowerDetails.borrowedAmount,
-            borrowAmount,
-            "Borrowed amount should match"
-        );
-        assertTrue(
-            borrowerDetails.dueDate > block.timestamp,
-            "Due date should be in the future"
-        );
-        assertGt(
-            borrowerDetails.interestRate,
-            0,
-            "Interest rate should be greater than 0"
-        );
-        assertEq(
-            borrowerDetails.borrowAt,
-            block.timestamp,
-            "Borrow timestamp should match current timestamp"
-        );
+        assertEq(borrowerDetails.borrowedAmount, borrowAmount, "Borrowed amount should match");
+        assertTrue(borrowerDetails.dueDate > block.timestamp, "Due date should be in the future");
+        assertGt(borrowerDetails.interestRate, 0, "Interest rate should be greater than 0");
+        assertEq(borrowerDetails.borrowAt, block.timestamp, "Borrow timestamp should match current timestamp");
 
         vm.stopPrank();
     }
@@ -222,24 +201,13 @@ contract BorrowAndPayTest is Test {
         bank.borrow(borrowAmount);
 
         // Option 2: Using destructuring with new function
-        (
-            uint256 borrowedAmount,
-            uint256 interestRate,
-            uint256 borrowAt,
-            uint256 dueDate
-        ) = bank.getBorrowerDetailsValues(user1);
+        (uint256 borrowedAmount, uint256 interestRate, uint256 borrowAt, uint256 dueDate) =
+            bank.getBorrowerDetailsValues(user1);
 
         assertEq(borrowedAmount, borrowAmount, "Borrowed amount should match");
-        assertTrue(
-            dueDate > block.timestamp,
-            "Due date should be in the future"
-        );
+        assertTrue(dueDate > block.timestamp, "Due date should be in the future");
         assertGt(interestRate, 0, "Interest rate should be greater than 0");
-        assertEq(
-            borrowAt,
-            block.timestamp,
-            "Borrow timestamp should match current timestamp"
-        );
+        assertEq(borrowAt, block.timestamp, "Borrow timestamp should match current timestamp");
 
         vm.stopPrank();
     }
@@ -253,9 +221,7 @@ contract BorrowAndPayTest is Test {
         vm.startPrank(user1);
 
         // Check if the user can borrow a zero amount
-        vm.expectRevert(
-            BankAccount.BankAccount__LoanAmountMustBeGreaterThanZero.selector
-        );
+        vm.expectRevert(BankAccount.BankAccount__LoanAmountMustBeGreaterThanZero.selector);
         bank.borrow(0);
 
         vm.stopPrank();
@@ -302,31 +268,17 @@ contract BorrowAndPayTest is Test {
         console2.log("User1 paid back the loan", owedAmount, "wei");
 
         // Check if the loan is fully paid back
-        (
-            uint256 borrowedAmount,
-            uint256 interestRate,
-            uint256 borrowAt,
-            uint256 dueDate
-        ) = bank.getBorrowerDetailsValues(user1);
+        (uint256 borrowedAmount, uint256 interestRate, uint256 borrowAt, uint256 dueDate) =
+            bank.getBorrowerDetailsValues(user1);
         assertEq(borrowedAmount, 0, "Remaining debt should be zero");
-        assertEq(
-            interestRate,
-            0,
-            "Interest rate should be zero after paying back"
-        );
-        assertEq(
-            borrowAt,
-            0,
-            "Borrow timestamp should be reset after paying back"
-        );
+        assertEq(interestRate, 0, "Interest rate should be zero after paying back");
+        assertEq(borrowAt, 0, "Borrow timestamp should be reset after paying back");
         assertEq(dueDate, 0, "Due date should be reset after paying back");
 
         // check if the User1 balance is updated correctly
         assertEq(
             address(user1).balance,
-            (USER_INITIAL_BALANCE - USER_DEPOSIT_AMOUNT) +
-                borrowAmount -
-                owedAmount,
+            (USER_INITIAL_BALANCE - USER_DEPOSIT_AMOUNT) + borrowAmount - owedAmount,
             "User1's balance should be updated after paying back the loan"
         );
         // Check if the BankAccount contract balance is updated correctly
@@ -342,7 +294,6 @@ contract BorrowAndPayTest is Test {
     /**
      * @dev Test to verify that a user emits the PaidBack event with correct parameters when paying back a loan.
      */
-
     function test_PaidBackEvent() public createAnAccount(user1) {
         // Start prank as user1
         vm.startPrank(user1);
@@ -439,10 +390,7 @@ contract BorrowAndPayTest is Test {
      * @dev Test to Verify that user can not pay back a loan if the amount is insufficient.
      * it revert with Bank_Bank__AmountIsInsufficient.
      */
-    function test_PayBackLoanWithInsufficientAmount()
-        public
-        createAnAccount(user1)
-    {
+    function test_PayBackLoanWithInsufficientAmount() public createAnAccount(user1) {
         // Start prank as user1
         vm.startPrank(user1);
 
@@ -468,10 +416,7 @@ contract BorrowAndPayTest is Test {
     /**
      * @dev Test to verify that the _calculateInterest function returns 0 when no time has passed.
      */
-    function test_CalculateInterest_ZeroTimeElapsed()
-        public
-        createAnAccount(user1)
-    {
+    function test_CalculateInterest_ZeroTimeElapsed() public createAnAccount(user1) {
         // Start prank as user1
         vm.startPrank(user1);
 
@@ -510,20 +455,12 @@ contract BorrowAndPayTest is Test {
         // Expected: (10 ether * 500 * 1 days) / (10000 * 365 days)
         // Expected: (10e18 * 500 * 86400) / (10000 * 31536000)
         // Expected: 432000000000000000000000000 / 315360000000000 = 1369863013698630 wei ≈ 0.00136986... ether
-        uint256 expectedInterest = (borrowAmount * 500 * 1 days) /
-            (10000 * 365 days);
+        uint256 expectedInterest = (borrowAmount * 500 * 1 days) / (10000 * 365 days);
 
-        assertEq(
-            interest,
-            expectedInterest,
-            "Interest calculation for 1 day should match expected value"
-        );
+        assertEq(interest, expectedInterest, "Interest calculation for 1 day should match expected value");
         // Also verify the approximate value for better understanding
         assertApproxEqRel(
-            interest,
-            1369863013698630,
-            1e15,
-            "Interest should be approximately 0.00136986 ether for 1 day"
+            interest, 1369863013698630, 1e15, "Interest should be approximately 0.00136986 ether for 1 day"
         );
 
         vm.stopPrank();
@@ -549,20 +486,12 @@ contract BorrowAndPayTest is Test {
         // Expected calculation:
         // Formula: (principal * rate * timeElapsed) / (BASIS_POINTS * SECONDS_IN_YEAR)
         // Expected: (20 ether * 500 * 30 days) / (10000 * 365 days)
-        uint256 expectedInterest = (borrowAmount * 500 * 30 days) /
-            (10000 * 365 days);
+        uint256 expectedInterest = (borrowAmount * 500 * 30 days) / (10000 * 365 days);
 
-        assertEq(
-            interest,
-            expectedInterest,
-            "Interest calculation for 30 days should match expected value"
-        );
+        assertEq(interest, expectedInterest, "Interest calculation for 30 days should match expected value");
         // Verify approximate value: 30/365 * 5% * 20 ether ≈ 0.0822 ether
         assertApproxEqRel(
-            interest,
-            82191780821917808,
-            1e15,
-            "Interest should be approximately 0.0822 ether for 30 days"
+            interest, 82191780821917808, 1e15, "Interest should be approximately 0.0822 ether for 30 days"
         );
 
         vm.stopPrank();
@@ -591,15 +520,9 @@ contract BorrowAndPayTest is Test {
         // Expected: 50 ether * 500 / 10000 = 50 ether * 0.05 = 2.5 ether
         uint256 expectedInterest = (borrowAmount * 500) / 10000; // Simplified for 1 year
 
+        assertEq(interest, expectedInterest, "Interest calculation for 1 year should match expected value");
         assertEq(
-            interest,
-            expectedInterest,
-            "Interest calculation for 1 year should match expected value"
-        );
-        assertEq(
-            interest,
-            2.5 ether,
-            "Interest should be exactly 2.5 ether for 50 ether borrowed for 1 year at 5% rate"
+            interest, 2.5 ether, "Interest should be exactly 2.5 ether for 50 ether borrowed for 1 year at 5% rate"
         );
 
         vm.stopPrank();
@@ -609,10 +532,7 @@ contract BorrowAndPayTest is Test {
      * @dev Test to verify that the _calculateInterest function calculates interest correctly for 15 days.
      * This matches the scenario used in other tests.
      */
-    function test_CalculateInterest_FifteenDays()
-        public
-        createAnAccount(user1)
-    {
+    function test_CalculateInterest_FifteenDays() public createAnAccount(user1) {
         // Start prank as user1
         vm.startPrank(user1);
 
@@ -629,23 +549,14 @@ contract BorrowAndPayTest is Test {
         // Expected calculation:
         // Formula: (principal * rate * timeElapsed) / (BASIS_POINTS * SECONDS_IN_YEAR)
         // Expected: (5 ether * 500 * 15 days) / (10000 * 365 days)
-        uint256 expectedInterest = (borrowAmount * 500 * 15 days) /
-            (10000 * 365 days);
+        uint256 expectedInterest = (borrowAmount * 500 * 15 days) / (10000 * 365 days);
 
-        assertEq(
-            interest,
-            expectedInterest,
-            "Interest calculation for 15 days should match expected value"
-        );
+        assertEq(interest, expectedInterest, "Interest calculation for 15 days should match expected value");
 
         // Verify this matches what getHowMuchHasToBePaid returns minus principal
         uint256 totalOwed = bank.getHowMuchHasToBePaid(user1);
         uint256 interestFromTotal = totalOwed - borrowAmount;
-        assertEq(
-            interest,
-            interestFromTotal,
-            "Interest calculated directly should match interest from total owed"
-        );
+        assertEq(interest, interestFromTotal, "Interest calculated directly should match interest from total owed");
 
         vm.stopPrank();
     }
@@ -653,10 +564,7 @@ contract BorrowAndPayTest is Test {
     /**
      * @dev Test to verify that the _calculateInterest function returns 0 for zero principal.
      */
-    function test_CalculateInterest_ZeroPrincipal()
-        public
-        createAnAccount(user1)
-    {
+    function test_CalculateInterest_ZeroPrincipal() public createAnAccount(user1) {
         // Start prank as user1
         vm.startPrank(user1);
 
@@ -698,12 +606,7 @@ contract BorrowAndPayTest is Test {
 
         // Interest should scale linearly with principal
         // user2 borrowed 50x more, so interest should be 50x more (with small rounding tolerance)
-        assertApproxEqRel(
-            interest2,
-            interest1 * 50,
-            1e12,
-            "Interest should scale linearly with principal amount"
-        );
+        assertApproxEqRel(interest2, interest1 * 50, 1e12, "Interest should scale linearly with principal amount");
 
         // Verify the actual calculations (using separate variables to avoid precision issues)
         uint256 principal1 = 1 ether;
@@ -713,30 +616,17 @@ contract BorrowAndPayTest is Test {
         uint256 basisPoints = 10000;
         uint256 secondsInYear = 365 days;
 
-        uint256 expectedInterest1 = (principal1 * rate * timeElapsed) /
-            (basisPoints * secondsInYear);
-        uint256 expectedInterest2 = (principal2 * rate * timeElapsed) /
-            (basisPoints * secondsInYear);
+        uint256 expectedInterest1 = (principal1 * rate * timeElapsed) / (basisPoints * secondsInYear);
+        uint256 expectedInterest2 = (principal2 * rate * timeElapsed) / (basisPoints * secondsInYear);
 
-        assertEq(
-            interest1,
-            expectedInterest1,
-            "Interest for 1 ether should match expected"
-        );
-        assertEq(
-            interest2,
-            expectedInterest2,
-            "Interest for 50 ether should match expected"
-        );
+        assertEq(interest1, expectedInterest1, "Interest for 1 ether should match expected");
+        assertEq(interest2, expectedInterest2, "Interest for 50 ether should match expected");
     }
 
     /**
      * @dev Test to verify interest calculation precision with small amounts and short durations.
      */
-    function test_CalculateInterest_SmallAmountShortDuration()
-        public
-        createAnAccount(user1)
-    {
+    function test_CalculateInterest_SmallAmountShortDuration() public createAnAccount(user1) {
         // Start prank as user1
         vm.startPrank(user1);
 
@@ -753,14 +643,9 @@ contract BorrowAndPayTest is Test {
         // Expected calculation:
         // Formula: (principal * rate * timeElapsed) / (BASIS_POINTS * SECONDS_IN_YEAR)
         // Expected: (0.1 ether * 500 * 1 hours) / (10000 * 365 days)
-        uint256 expectedInterest = (borrowAmount * 500 * 1 hours) /
-            (10000 * 365 days);
+        uint256 expectedInterest = (borrowAmount * 500 * 1 hours) / (10000 * 365 days);
 
-        assertEq(
-            interest,
-            expectedInterest,
-            "Interest calculation for small amount and short duration should match"
-        );
+        assertEq(interest, expectedInterest, "Interest calculation for small amount and short duration should match");
 
         vm.stopPrank();
     }
