@@ -158,9 +158,9 @@ contract Bank is AccessControl {
      * @notice This function allows a user to pay back borrowed funds with due day passed fee.
      * @dev This function is called when the due date has passed and the borrower has to pay a fee.
      */
-    function payBackWithDueDayPassedFee(uint256 _fee) external payable {
+    function payBackWithDueDayPassedFee() external payable {
         // Call the internal pay back with due day passed fee function
-        _payBackWithDueDayPassedFee(msg.sender, msg.value, _fee);
+        _payBackWithDueDayPassedFee(msg.sender, msg.value);
     }
 
     /**
@@ -366,23 +366,15 @@ contract Bank is AccessControl {
      * @notice Function to pay back borrowed funds with due day passed fee.
      * @dev This function is called when the due date has passed and the borrower has to pay a fee.
      */
-    function _payBackWithDueDayPassedFee(address _borrower, uint256 _amount, uint256 _fee)
-        internal
-        isValidAddress(_borrower)
-    {
-        // Check if the fee is sufficient
-        if (_fee < DUE_DAY_PASSED_FEE) {
-            revert Bank__InsufficientDueDayPassedFee(); // Revert if the fee is insufficient
-        }
+    function _payBackWithDueDayPassedFee(address _borrower, uint256 _amount) internal isValidAddress(_borrower) {
         // Calculate the total amount to pay back (principal + interest)
-        uint256 totalAmount = borrowers[_borrower].borrowedAmount + _calculateInterest(_borrower);
+        uint256 totalAmount = borrowers[_borrower].borrowedAmount + _calculateInterest(_borrower) + DUE_DAY_PASSED_FEE;
         // Check if the amount to pay back is not equal to the total amount
         if (_amount != totalAmount) {
             revert Bank__AmountIsInsufficient(); // Revert if the amount to pay back is less than the total amount
         }
         // Transfer the total amount back to the bank
-        i_bankAccount.receiveLoan{value: _amount + _fee}(_borrower, address(this));
-
+        i_bankAccount.receiveLoan{value: totalAmount}(_borrower, address(this));
         // Update the borrower's details
         borrowers[_borrower].borrowedAmount = 0;
         borrowers[_borrower].interestRate = 0;

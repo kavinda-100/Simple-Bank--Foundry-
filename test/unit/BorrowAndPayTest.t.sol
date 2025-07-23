@@ -411,6 +411,59 @@ contract BorrowAndPayTest is Test {
         vm.stopPrank();
     }
 
+    // ================================== Due Day Passed Tests ==================================
+
+    /**
+     * @dev Test to verify that a user can pay back a loan with due day passed fee.
+     */
+    function test_PayBackLoanWithDueDayPassedFee() public createAnAccount(user1) {
+        // Start prank as user1
+        vm.startPrank(user1);
+
+        // User borrows 5 ether
+        uint256 borrowAmount = 5 ether;
+        bank.borrow(borrowAmount);
+
+        // warp to simulate time passing beyond due date
+        vm.warp(block.timestamp + 31 days);
+
+        // Check how much the user owes
+        uint256 owedAmount = bank.getHowMuchHasToBePaid(user1);
+        uint256 dueDayPassedFee = bank.getDueDayPassedFee();
+
+        // Check if the user can pay back a loan after the due date
+        vm.expectRevert(Bank.Bank__DueDatePassed.selector);
+        bank.payBack{value: owedAmount}();
+
+        // User pays back the loan with due day passed fee
+        uint256 totalAmount = owedAmount + dueDayPassedFee;
+        bank.payBackWithDueDayPassedFee{value: totalAmount}();
+
+        // Check if the loan is fully paid back
+        (uint256 borrowedAmount, uint256 interestRate, uint256 borrowAt, uint256 dueDate) =
+            bank.getBorrowerDetailsValues(user1);
+        assertEq(borrowedAmount, 0, "Remaining debt should be zero after paying with due day passed fee");
+        assertEq(interestRate, 0, "Interest rate should be zero after paying back with due day passed fee");
+        assertEq(borrowAt, 0, "Borrow timestamp should be reset after paying back with due day passed fee");
+        assertEq(dueDate, 0, "Due date should be reset after paying back with due day passed fee");
+
+        // check if the User1 balance is updated correctly
+        assertEq(
+            address(user1).balance,
+            (USER_INITIAL_BALANCE - USER_DEPOSIT_AMOUNT) + borrowAmount - owedAmount - dueDayPassedFee,
+            "User1's balance should be updated after paying back the loan with due day passed fee"
+        );
+
+        // Check if the BankAccount contract balance is updated correctly
+        assertEq(
+            address(bankAccount).balance,
+            (USER_DEPOSIT_AMOUNT - borrowAmount) + owedAmount + dueDayPassedFee,
+            "BankAccount balance should be updated after paying back the loan with due day passed fee"
+        );
+
+        vm.stopPrank();
+    }
+
     // ================================== Interest Calculation Tests ==================================
 
     /**
