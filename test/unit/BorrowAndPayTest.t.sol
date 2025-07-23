@@ -502,6 +502,32 @@ contract BorrowAndPayTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * @dev Test to verify that a amount is sufficient when paying back a loan with due day passed fee.
+     * it revert with Bank__AmountIsInsufficient.
+     */
+    function test_PayBackLoanWithDueDayPassedFeeInsufficientAmount() public createAnAccount(user1) {
+        // Start prank as user1
+        vm.startPrank(user1);
+
+        // User borrows 5 ether
+        uint256 borrowAmount = 5 ether;
+        bank.borrow(borrowAmount);
+
+        // warp to simulate time passing beyond due date
+        vm.warp(block.timestamp + 31 days);
+
+        // Check how much the user owes
+        uint256 owedAmount = bank.getHowMuchHasToBePaid(user1);
+        uint256 dueDayPassedFee = bank.getDueDayPassedFee();
+        uint256 totalAmount = owedAmount + dueDayPassedFee;
+        // Check if the user can pay back a loan with insufficient amount
+        vm.expectRevert(Bank.Bank__AmountIsInsufficient.selector);
+        bank.payBackWithDueDayPassedFee{value: totalAmount - 1}();
+
+        vm.stopPrank();
+    }
+
     // ================================== Interest Calculation Tests ==================================
 
     /**
