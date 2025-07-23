@@ -242,5 +242,41 @@ contract BorrowAndPayTest is Test {
 
     // ================================== Pay Tests ==================================
 
+    /**
+     * @dev Test to verify that a user can pay back a borrowed loan.
+     */
+    function test_PayBackLoan() public createAnAccount(user1) {
+        // Start prank as user1
+        vm.startPrank(user1);
+
+        // User borrows 5 ether
+        uint256 borrowAmount = 5 ether;
+        bank.borrow(borrowAmount);
+
+        // warp to simulate time passing
+        vm.warp(block.timestamp + 15 days);
+
+        // Check how much the user owes
+        uint256 owedAmount = bank.getHowMuchHasToBePaid(user1);
+
+        // User pays back the loan
+        bank.payBack{value: owedAmount}();
+        console2.log("User1 paid back the loan", owedAmount / 1e18, "ETH");
+        console2.log("User1 paid back the loan", owedAmount, "wei");
+
+        // Check if the loan is fully paid back
+        (uint256 borrowedAmount, uint256 interestRate, uint256 borrowAt, uint256 dueDate) = bank.getBorrowerDetailsValues(user1);
+        assertEq(borrowedAmount, 0, "Remaining debt should be zero");
+        assertEq(interestRate, 0, "Interest rate should be zero after paying back");
+        assertEq(borrowAt, 0, "Borrow timestamp should be reset after paying back");
+        assertEq(dueDate, 0, "Due date should be reset after paying back");
+
+        // check if the User1 balance is updated correctly
+        assertEq(address(user1).balance, (USER_INITIAL_BALANCE - USER_DEPOSIT_AMOUNT) + borrowAmount - owedAmount, "User1's balance should be updated after paying back the loan");
+        // Check if the BankAccount contract balance is updated correctly
+        assertEq(address(bankAccount).balance, (USER_DEPOSIT_AMOUNT - borrowAmount) + owedAmount, "BankAccount balance should be updated after paying back the loan");
+
+        vm.stopPrank();
+    }
 
 }

@@ -336,6 +336,7 @@ contract Bank is AccessControl {
         borrowers[_borrower].borrowedAmount = 0;
         borrowers[_borrower].interestRate = 0;
         borrowers[_borrower].dueDate = 0;
+        borrowers[_borrower].borrowAt = 0;
         // Emit an event for paying back
         emit PaidBack(_borrower, totalAmount);
     }
