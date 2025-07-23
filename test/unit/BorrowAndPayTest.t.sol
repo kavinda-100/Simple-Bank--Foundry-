@@ -464,6 +464,44 @@ contract BorrowAndPayTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * @dev Test to verify that a user emits the Events with correct parameters when receiving a loan payed after due date.
+     */
+    function test_LoanPayBackAfterDueDateEvents() public createAnAccount(user1) {
+        // Start prank as user1
+        vm.startPrank(user1);
+
+        // User borrows 5 ether
+        uint256 borrowAmount = 5 ether;
+        bank.borrow(borrowAmount);
+
+        // warp to simulate time passing
+        vm.warp(block.timestamp + 31 days);
+
+        // Check how much the user owes
+        uint256 owedAmount = bank.getHowMuchHasToBePaid(user1);
+        uint256 dueDayPassedFee = bank.getDueDayPassedFee();
+
+        // Check if the user can pay back a loan after the due date
+        vm.expectRevert(Bank.Bank__DueDatePassed.selector);
+        bank.payBack{value: owedAmount}();
+
+        // User pays back the loan with due day passed fee
+        uint256 totalAmount = owedAmount + dueDayPassedFee;
+
+        // Expect the LoanReceived event to be emitted when the loan is received
+        // The event should emit the actual amount received (owedAmount), not the original borrowed amount
+        vm.expectEmit(true, false, false, true);
+        emit LoanReceived(user1, owedAmount + dueDayPassedFee);
+
+        // Expect the PaidBack event to be emitted when the loan is paid back with due day passed fee
+        vm.expectEmit(true, false, false, true);
+        emit PaidBack(user1, owedAmount + dueDayPassedFee);
+        bank.payBackWithDueDayPassedFee{value: totalAmount}();
+
+        vm.stopPrank();
+    }
+
     // ================================== Interest Calculation Tests ==================================
 
     /**
