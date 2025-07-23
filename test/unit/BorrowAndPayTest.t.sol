@@ -434,4 +434,32 @@ contract BorrowAndPayTest is Test {
 
         vm.stopPrank();
     }
+
+    /**
+     * @dev Test to Verify that user can not pay back a loan if the amount is insufficient.
+     * it revert with Bank_Bank__AmountIsInsufficient.
+     */
+    function test_PayBackLoanWithInsufficientAmount()
+        public
+        createAnAccount(user1)
+    {
+        // Start prank as user1
+        vm.startPrank(user1);
+
+        // User borrows 5 ether
+        uint256 borrowAmount = 5 ether;
+        bank.borrow(borrowAmount);
+
+        // warp to simulate time passing
+        vm.warp(block.timestamp + 15 days);
+
+        // Check how much the user owes
+        uint256 owedAmount = bank.getHowMuchHasToBePaid(user1);
+
+        // Check if the user can pay back a loan with insufficient amount
+        vm.expectRevert(Bank.Bank__AmountIsInsufficient.selector);
+        bank.payBack{value: owedAmount - 1 ether}();
+
+        vm.stopPrank();
+    }
 }
