@@ -379,7 +379,7 @@ contract BankTest is Test {
     /**
      * @dev Test edge case where calculating interest with zero values
      */
-    function test_CalculateInterest_EdgeCases() public {
+    function test_CalculateInterest_EdgeCases() public view {
         console.log("=== Test Calculate Interest Edge Cases ===");
 
         // Test with address that never borrowed (should return 0)
