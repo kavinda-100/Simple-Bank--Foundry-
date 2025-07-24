@@ -4,6 +4,7 @@ A comprehensive decentralized banking application built with Solidity and Foundr
 
 ## Features
 
+- [x] Create a new bank account with minimum balance requirement
 - [x] Deposit funds into an account
 - [x] Withdraw funds from an account
 - [x] Check account balance
