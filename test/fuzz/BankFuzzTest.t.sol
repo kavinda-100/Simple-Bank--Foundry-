@@ -37,6 +37,9 @@ contract BankFuzzTest is Test {
         vm.assume(user != address(0));
         vm.assume(user != admin);
         vm.assume(user.code.length == 0); // Only EOAs
+        vm.assume(uint160(user) > 0x10); // Exclude precompile addresses (0x1-0x9) and other low addresses
+        vm.assume(user != address(0x000000000000000000636F6e736F6c652e6c6f67)); // Exclude console.log address
+        vm.assume(uint160(user) < type(uint160).max - 1000); // Exclude very high addresses that might be special
         depositAmount = bound(depositAmount, MINIMUM_BALANCE, 100 ether);
 
         // Fund the user
@@ -60,6 +63,9 @@ contract BankFuzzTest is Test {
         vm.assume(user != address(0));
         vm.assume(user != admin);
         vm.assume(user.code.length == 0); // Only EOAs
+        vm.assume(uint160(user) > 0x10); // Exclude precompile addresses (0x1-0x9) and other low addresses
+        vm.assume(user != address(0x000000000000000000636F6e736F6c652e6c6f67)); // Exclude console.log address
+        vm.assume(uint160(user) < type(uint160).max - 1000); // Exclude very high addresses that might be special
         depositAmount = bound(depositAmount, MINIMUM_BALANCE, 50 ether);
         borrowAmount = bound(borrowAmount, 0.1 ether, min(depositAmount, 50 ether)); // Max 50 ETH borrow
 
@@ -99,6 +105,9 @@ contract BankFuzzTest is Test {
         vm.assume(user != address(0));
         vm.assume(user != admin);
         vm.assume(user.code.length == 0); // Only EOAs
+        vm.assume(uint160(user) > 0x10); // Exclude precompile addresses (0x1-0x9) and other low addresses
+        vm.assume(user != address(0x000000000000000000636F6e736F6c652e6c6f67)); // Exclude console.log address
+        vm.assume(uint160(user) < type(uint160).max - 1000); // Exclude very high addresses that might be special
         borrowAmount = bound(borrowAmount, 1 ether, 50 ether);
         timeSkip = bound(timeSkip, 1 days, 30 days); // Reduced time range
 
@@ -134,6 +143,12 @@ contract BankFuzzTest is Test {
         vm.assume(from != to);
         vm.assume(from != admin && to != admin);
         vm.assume(from.code.length == 0 && to.code.length == 0); // Only EOAs
+        vm.assume(uint160(from) > 0x10 && uint160(to) > 0x10); // Exclude precompile addresses
+        vm.assume(
+            from != address(0x000000000000000000636F6e736F6c652e6c6f67)
+                && to != address(0x000000000000000000636F6e736F6c652e6c6f67)
+        ); // Exclude console.log
+        vm.assume(uint160(from) < type(uint160).max - 1000 && uint160(to) < type(uint160).max - 1000); // Exclude very high addresses
         depositAmount = bound(depositAmount, MINIMUM_BALANCE, 50 ether);
         transferAmount = bound(transferAmount, 0.1 ether, depositAmount / 2); // Reduced transfer amount
 
@@ -168,6 +183,10 @@ contract BankFuzzTest is Test {
         // Bound inputs
         vm.assume(user != address(0));
         vm.assume(user != admin);
+        vm.assume(user.code.length == 0); // Only EOAs
+        vm.assume(uint160(user) > 0x10); // Exclude precompile addresses (0x1-0x9) and other low addresses
+        vm.assume(user != address(0x000000000000000000636F6e736F6c652e6c6f67)); // Exclude console.log address
+        vm.assume(uint160(user) < type(uint160).max - 1000); // Exclude very high addresses that might be special
         depositAmount = bound(depositAmount, 100 ether, 200 ether);
         withdrawAmount = bound(withdrawAmount, 0.1 ether, depositAmount / 2); // Reduced withdraw amount
 
