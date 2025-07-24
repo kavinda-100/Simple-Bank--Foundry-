@@ -115,4 +115,60 @@ contract AccountActivationTest is Test {
         assertFalse(bank.isAccountActive(user1), "Account should not be active due to insufficient fee");
         vm.stopPrank();
     }
+
+    // ================================ Test Account Frozen =================================
+
+    /**
+     * @dev Test to verify that when an account is frozen..
+     */
+    function test_AccountFrozen() public createAnAccount(user1) {
+        // account should be active after creation
+        assertTrue(bank.isAccountActive(user1), "Account should be active after creation");
+
+        // Get the actual owner/admin of the Bank contract
+        address bankOwner = bank.owner();
+
+        vm.startPrank(bankOwner);
+        bank.freezeAccount(user1); // Freeze the account first
+        vm.stopPrank();
+        // Check if the account is frozen
+        assertFalse(bank.isAccountActive(user1), "Account should be frozen after freezing");
+    }
+
+    /**
+     * @dev Test to verify that when an account is frozen, it emits the AccountFrozen event.
+     */
+    function test_AccountFrozenEventEmitted() public createAnAccount(user1) {
+        // Get the actual owner/admin of the Bank contract
+        address bankOwner = bank.owner();
+
+        vm.startPrank(bankOwner);
+        // expect the AccountFrozen event to be emitted when freezing the account
+        vm.expectEmit(true, true, true, true);
+        emit AccountFrozen(user1);
+        // Freeze the account
+        bank.freezeAccount(user1);
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test to verify that when an account is already frozen, it reverts with Bank__AccountAlreadyFrozen
+     */
+    function test_AccountNotActiveRevert() public createAnAccount(user1) {
+        // Get the actual owner/admin of the Bank contract
+        address bankOwner = bank.owner();
+
+        vm.startPrank(bankOwner);
+        bank.freezeAccount(user1); // Freeze the account first
+        vm.stopPrank();
+
+        // Verify account is frozen
+        assertFalse(bank.isAccountActive(user1), "Account should be frozen");
+
+        vm.startPrank(bankOwner);
+        // expect revert if trying to activate a frozen account
+        vm.expectRevert(Bank.Bank__AccountAlreadyFrozen.selector);
+        bank.freezeAccount(user1);
+        vm.stopPrank();
+    }
 }

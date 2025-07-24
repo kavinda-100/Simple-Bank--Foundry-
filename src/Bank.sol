@@ -18,6 +18,7 @@ contract Bank is AccessControl {
     error Bank__NotEligibleToBorrow();
     error Bank__MaxBorrowAmountReached();
     error Bank__AccountNotActive();
+    error Bank__AccountAlreadyFrozen();
     error Bank__DueDatePassed();
     error Bank__TransferFailed();
     error Bank__UnAuthorized();
@@ -208,7 +209,7 @@ contract Bank is AccessControl {
     function _freezeAccount(address _user) internal isValidAddress(_user) {
         // Ensure the account is currently active
         if (!_isAccountActive(_user)) {
-            revert Bank__AccountNotActive(); // Revert if the account is not active
+            revert Bank__AccountAlreadyFrozen(); // Revert if the account is not active
         }
         // Freeze the account
         s_accounts_active[_user] = false; // Freeze account
