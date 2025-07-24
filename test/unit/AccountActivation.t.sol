@@ -8,7 +8,7 @@ import {BankAccount} from "../../src/BankAccount.sol";
 // import deployment scripts
 import {DeployBankSystem} from "../../script/DeployBankSystem.s.sol";
 
-contract BorrowAndPayTest is Test {
+contract AccountActivationTest is Test {
     // Contracts to test
     Bank public bank;
     BankAccount public bankAccount;
@@ -68,6 +68,7 @@ contract BorrowAndPayTest is Test {
         vm.expectEmit(true, true, true, true);
         emit AccountActivated(user1);
         bank.createAccount{value: USER_DEPOSIT_AMOUNT}();
+        assertTrue(bank.isAccountActive(user1), "Account should still be active");
         vm.stopPrank();
     }
 
@@ -80,6 +81,7 @@ contract BorrowAndPayTest is Test {
         uint256 activationFee = bank.getActivationFee();
         vm.expectRevert(Bank.Bank__AccountAlreadyActive.selector);
         bank.activateAccount{value: activationFee}(user1);
+        assertTrue(bank.isAccountActive(user1), "Account should still be active");
         vm.stopPrank();
     }
 
@@ -88,10 +90,17 @@ contract BorrowAndPayTest is Test {
      * it reverts with Bank__InsufficientActivationFee.
      */
     function test_InsufficientActivationFeeRevert() public createAnAccount(user1) {
+        vm.startPrank(address(bank));
+        bank.freezeAccount(user1); // Freeze the account first
+        assertFalse(bank.isAccountActive(user1), "Account should not be active due to insufficient fee");
+        vm.stopPrank();
+
         vm.startPrank(user1);
         uint256 activationFee = bank.getActivationFee();
         vm.expectRevert(Bank.Bank__InsufficientActivationFee.selector);
         bank.activateAccount{value: activationFee - 1}(user1);
+        // Check that the account is still deactivated
+        assertFalse(bank.isAccountActive(user1), "Account should not be active due to insufficient fee");
         vm.stopPrank();
     }
 }
