@@ -49,7 +49,7 @@ contract AccountActivationTest is Test {
         _;
     }
 
-    // ================================= Test Cases =========================================
+    // ================================= Test Account Activation =========================================
 
     /**
      * @dev Test to make sure a user can create an account and account is active after creation.
@@ -65,9 +65,12 @@ contract AccountActivationTest is Test {
      */
     function test_AccountActivatedEventEmitted() public {
         vm.startPrank(user1);
+        // expect the AccountActivated event to be emitted when activating the account
         vm.expectEmit(true, true, true, true);
         emit AccountActivated(user1);
+        // create an account to ensure it is active
         bank.createAccount{value: USER_DEPOSIT_AMOUNT}();
+        // check if the account is active
         assertTrue(bank.isAccountActive(user1), "Account should still be active");
         vm.stopPrank();
     }
@@ -78,9 +81,13 @@ contract AccountActivationTest is Test {
      */
     function test_AccountAlreadyActiveRevert() public createAnAccount(user1) {
         vm.startPrank(user1);
+        // get the activation fee
         uint256 activationFee = bank.getActivationFee();
+        // expect revert if trying to activate an already active account
         vm.expectRevert(Bank.Bank__AccountAlreadyActive.selector);
+        // Attempt to activate the account again
         bank.activateAccount{value: activationFee}(user1);
+        // Check that the account is still active
         assertTrue(bank.isAccountActive(user1), "Account should still be active");
         vm.stopPrank();
     }
