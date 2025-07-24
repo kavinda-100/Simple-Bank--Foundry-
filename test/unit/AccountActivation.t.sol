@@ -82,4 +82,16 @@ contract BorrowAndPayTest is Test {
         bank.activateAccount{value: activationFee}(user1);
         vm.stopPrank();
     }
+
+    /**
+     * @dev Test to verify that when activating an account, if the user does not send enough ETH,
+     * it reverts with Bank__InsufficientActivationFee.
+     */
+    function test_InsufficientActivationFeeRevert() public createAnAccount(user1) {
+        vm.startPrank(user1);
+        uint256 activationFee = bank.getActivationFee();
+        vm.expectRevert(Bank.Bank__InsufficientActivationFee.selector);
+        bank.activateAccount{value: activationFee - 1}(user1);
+        vm.stopPrank();
+    }
 }
