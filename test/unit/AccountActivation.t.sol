@@ -97,10 +97,15 @@ contract AccountActivationTest is Test {
      * it reverts with Bank__InsufficientActivationFee.
      */
     function test_InsufficientActivationFeeRevert() public createAnAccount(user1) {
-        vm.startPrank(address(bank));
+        // Get the actual owner/admin of the Bank contract
+        address bankOwner = bank.owner();
+
+        vm.startPrank(bankOwner);
         bank.freezeAccount(user1); // Freeze the account first
-        assertFalse(bank.isAccountActive(user1), "Account should not be active due to insufficient fee");
         vm.stopPrank();
+
+        // Verify account is frozen
+        assertFalse(bank.isAccountActive(user1), "Account should be frozen");
 
         vm.startPrank(user1);
         uint256 activationFee = bank.getActivationFee();
