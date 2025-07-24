@@ -70,4 +70,16 @@ contract BorrowAndPayTest is Test {
         bank.createAccount{value: USER_DEPOSIT_AMOUNT}();
         vm.stopPrank();
     }
+
+    /**
+     *
+     * @dev Test to verify that if account already active, it reverts with Bank__AccountAlreadyActive
+     */
+    function test_AccountAlreadyActiveRevert() public createAnAccount(user1) {
+        vm.startPrank(user1);
+        uint256 activationFee = bank.getActivationFee();
+        vm.expectRevert(Bank.Bank__AccountAlreadyActive.selector);
+        bank.activateAccount{value: activationFee}(user1);
+        vm.stopPrank();
+    }
 }

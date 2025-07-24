@@ -464,6 +464,15 @@ contract Bank is AccessControl {
     }
 
     /**
+     * @notice Function to get the activation fee.
+     * @dev This function returns the fee that is charged to activate an account.
+     * @return uint256 The activation fee
+     */
+    function getActivationFee() external pure returns (uint256) {
+        return ACTIVATION_FEE; // Return the activation fee
+    }
+
+    /**
      * @param _borrower The address of the borrower
      * @return uint256 The calculated interest for the borrower
      * @notice Public wrapper function to test the internal _calculateInterest function
