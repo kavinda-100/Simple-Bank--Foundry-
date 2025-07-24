@@ -167,13 +167,14 @@ forge script script/DeployBankSystem.s.sol:DeployBankSystem \
 - Reentrancy protection
 - Proper error handling with custom errors
 - Comprehensive event logging
+- **99.15% test coverage** for Bank.sol with comprehensive edge case testing
 - **100% test coverage** for BankAccount.sol ensuring all edge cases are tested
 
 ## Testing Coverage
 
 The project includes comprehensive test coverage across all contracts:
 
-- **71 test cases** covering all functionality
+- **101 test cases** covering all functionality
 - Unit tests for individual contract functions
 - Integration tests for contract interactions
 - Access control and security testing
@@ -188,7 +189,11 @@ The project includes comprehensive test coverage across all contracts:
 +===============================================+
 | AccessControlTest | 3      | 0      | 0       |
 |-------------------+--------+--------+---------|
+| AccountActivation | 11     | 0      | 0       |
+|-------------------+--------+--------+---------|
 | BankAccountTest   | 19     | 0      | 0       |
+|-------------------+--------+--------+---------|
+| BankTest          | 19     | 0      | 0       |
 |-------------------+--------+--------+---------|
 | BorrowAndPayTest  | 27     | 0      | 0       |
 |-------------------+--------+--------+---------|
@@ -196,7 +201,7 @@ The project includes comprehensive test coverage across all contracts:
 ╰-------------------+--------+--------+---------╯
 ```
 
-Total: **71 tests passed** ✅
+Total: **101 tests passed** ✅
 
 ### Code Coverage
 
@@ -204,7 +209,7 @@ Total: **71 tests passed** ✅
 ╭-------------------------+----------+-----------+-----------+---------╮
 | File                    | % Lines  | % Stmts   | % Branch  | % Funcs |
 +=================================================================+
-| src/Bank.sol            | 80.91%   | 83.51%    | 53.85%    | 80.65%  |
+| src/Bank.sol            | 99.15%   | 99.04%    | 93.75%    | 100.00% |
 |-------------------------+----------+-----------+-----------+---------|
 | src/BankAccount.sol     | 100.00%  | 100.00%   | 100.00%   | 100.00% |
 |-------------------------+----------+-----------+-----------+---------|
@@ -212,12 +217,17 @@ Total: **71 tests passed** ✅
 ╰-------------------------+----------+-----------+-----------+---------╯
 ```
 
-**BankAccount.sol has achieved 100% test coverage** across all metrics! 🎉
+**Both main contracts have achieved near-perfect test coverage!** 🎉
+
+- **BankAccount.sol**: 100% coverage across all metrics
+- **Bank.sol**: 99.15% lines, 99.04% statements, 93.75% branches, 100% functions
 
 ### Test Categories
 
 - **AccessControlTest (3 tests)**: Role-based permissions and owner verification
+- **AccountActivation (11 tests)**: Account activation, freezing, and authorization testing
 - **BankAccountTest (19 tests)**: Direct BankAccount contract testing including edge cases, error conditions, invalid inputs, and transfer failures
+- **BankTest (19 tests)**: Comprehensive Bank contract testing including zero address validations, transfer failures, unauthorized operations, and complex edge cases
 - **BorrowAndPayTest (27 tests)**: Borrowing system, interest calculation, loan management, due date handling
 - **EthHandlingTest (22 tests)**: Account creation, deposits, withdrawals, transfers, validations
 
