@@ -18,6 +18,7 @@ contract Bank is AccessControl {
     error Bank__NotEligibleToBorrow();
     error Bank__MaxBorrowAmountReached();
     error Bank__AccountNotActive();
+    error Bank__AccountAlreadyFrozen();
     error Bank__DueDatePassed();
     error Bank__TransferFailed();
     error Bank__UnAuthorized();
@@ -112,6 +113,10 @@ contract Bank is AccessControl {
      * @dev User sends ETH and Bank forwards it to BankAccount on behalf of the user.
      */
     function deposit() external payable {
+        // check if the user has an active account
+        if (!_isAccountActive(msg.sender)) {
+            revert Bank__AccountNotActive(); // Revert if the account is not active
+        }
         i_bankAccount.deposit{value: msg.value}(msg.sender);
     }
 
@@ -120,6 +125,10 @@ contract Bank is AccessControl {
      * @notice Function to withdraw ETH from the Bank.
      */
     function withdraw(uint256 _amount) external {
+        // check if the user has an active account
+        if (!_isAccountActive(msg.sender)) {
+            revert Bank__AccountNotActive(); // Revert if the account is not active
+        }
         i_bankAccount.withdraw(msg.sender, _amount);
     }
 
@@ -130,6 +139,10 @@ contract Bank is AccessControl {
      * @dev This only updates balances, no actual ETH is moved.
      */
     function transferFunds(address _to, uint256 _amount) external {
+        // check if the user has an active account
+        if (!_isAccountActive(msg.sender)) {
+            revert Bank__AccountNotActive(); // Revert if the account is not active
+        }
         i_bankAccount.transferFunds(msg.sender, _to, _amount);
     }
 
@@ -208,7 +221,7 @@ contract Bank is AccessControl {
     function _freezeAccount(address _user) internal isValidAddress(_user) {
         // Ensure the account is currently active
         if (!_isAccountActive(_user)) {
-            revert Bank__AccountNotActive(); // Revert if the account is not active
+            revert Bank__AccountAlreadyFrozen(); // Revert if the account is not active
         }
         // Freeze the account
         s_accounts_active[_user] = false; // Freeze account
@@ -461,6 +474,15 @@ contract Bank is AccessControl {
      */
     function getDueDayPassedFee() external pure returns (uint256) {
         return DUE_DAY_PASSED_FEE; // Return the due day passed fee
+    }
+
+    /**
+     * @notice Function to get the activation fee.
+     * @dev This function returns the fee that is charged to activate an account.
+     * @return uint256 The activation fee
+     */
+    function getActivationFee() external pure returns (uint256) {
+        return ACTIVATION_FEE; // Return the activation fee
     }
 
     /**
