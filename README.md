@@ -231,7 +231,7 @@ Additional Testing
 - ⚖️ **Invariant Testing**: Ensures critical properties always hold
 - 🔗 **Integration Testing**: Validates complex real-world scenarios
 
-## Commands to Run Each Test Type
+## 📦 Commands to Run Each Test Type
 
 ```bash
 # Run all unit tests
