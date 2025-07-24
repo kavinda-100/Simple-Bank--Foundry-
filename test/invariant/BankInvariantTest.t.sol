@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "forge-std/Test.sol";
-import "forge-std/StdInvariant.sol";
-import "../../src/Bank.sol";
-import "../../src/BankAccount.sol";
+import {Test} from "forge-std/Test.sol";
+import {StdInvariant} from "forge-std/StdInvariant.sol";
+import {Bank} from "../../src/Bank.sol";
+import {BankAccount} from "../../src/BankAccount.sol";
 
 /**
  * @title BankInvariantTest
@@ -76,7 +76,7 @@ contract BankInvariantTest is StdInvariant, Test {
      * @notice Invariant: Interest calculations should always be reasonable
      * @dev Prevents interest overflow or underflow attacks
      */
-    function invariant_InterestBounds() public view {
+    function invariant_InterestBounds() public pure {
         // Interest rate should be within reasonable bounds (0-100%)
         // This is more of a sanity check since rate is hardcoded
         assertTrue(true, "Interest rate bounds check passed");
@@ -86,7 +86,7 @@ contract BankInvariantTest is StdInvariant, Test {
      * @notice Invariant: Account activation states should be consistent
      * @dev Once active, accounts shouldn't spontaneously deactivate (except via admin)
      */
-    function invariant_AccountActivationConsistency() public view {
+    function invariant_AccountActivationConsistency() public pure {
         // This would require tracking account states across multiple calls
         // For now, we ensure the activation check function doesn't revert unexpectedly
         assertTrue(true, "Account activation consistency maintained");
@@ -96,7 +96,7 @@ contract BankInvariantTest is StdInvariant, Test {
      * @notice Invariant: Maximum borrow limits should be enforced
      * @dev No user should ever borrow more than the maximum allowed
      */
-    function invariant_BorrowLimits() public view {
+    function invariant_BorrowLimits() public pure {
         // The contract should enforce MAX_BORROW_AMOUNT internally
         // We can't easily check all users without tracking, so this is a basic check
         assertTrue(true, "Borrow limits maintained");
