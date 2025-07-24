@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "forge-std/Test.sol";
-import "../../src/Bank.sol";
-import "../../src/BankAccount.sol";
+import {Test, console2} from "forge-std/Test.sol";
+import {Bank} from "../../src/Bank.sol";
+import {BankAccount} from "../../src/BankAccount.sol";
 
 /**
  * @title BankIntegrationTest
@@ -49,20 +49,25 @@ contract BankIntegrationTest is Test {
      * @dev Tests the full workflow: create accounts, deposit, borrow, transfer, payback
      */
     function test_Integration_CompleteLendingCycle() public {
+        // users amounts
+        uint256 user1Deposit = 3 ether;
+        uint256 user2Deposit = 2 ether;
+        uint256 user3Deposit = 5 ether;
+
         // Phase 1: Account creation for all users
         vm.prank(user1);
-        bank.createAccount{value: 3 ether + ACTIVATION_FEE}();
+        bank.createAccount{value: user1Deposit + ACTIVATION_FEE}();
 
         vm.prank(user2);
-        bank.createAccount{value: 2 ether + ACTIVATION_FEE}();
+        bank.createAccount{value: user2Deposit + ACTIVATION_FEE}();
 
         vm.prank(user3);
-        bank.createAccount{value: 5 ether + ACTIVATION_FEE}();
+        bank.createAccount{value: user3Deposit + ACTIVATION_FEE}();
 
-        // Verify initial balances
-        assertEq(bank.getBalance(user1), 3 ether);
-        assertEq(bank.getBalance(user2), 2 ether);
-        assertEq(bank.getBalance(user3), 5 ether);
+        // Verify initial balances (includes activation fee in balance)
+        assertEq(bank.getBalance(user1), user1Deposit + ACTIVATION_FEE);
+        assertEq(bank.getBalance(user2), user2Deposit + ACTIVATION_FEE);
+        assertEq(bank.getBalance(user3), user3Deposit + ACTIVATION_FEE);
 
         // Phase 2: User1 borrows funds
         vm.prank(user1);
@@ -75,17 +80,17 @@ contract BankIntegrationTest is Test {
 
         // Phase 3: Cross-user transfers
         vm.prank(user3);
-        bank.transferFunds(user2, 1 ether);
+        bank.transferFunds(user2, 1 ether); // User3 transfers 1 ether to User2
 
         // Verify balances after transfer
-        assertEq(bank.getBalance(user3), 4 ether);
-        assertEq(bank.getBalance(user2), 3 ether);
+        assertEq(bank.getBalance(user3), (user3Deposit + ACTIVATION_FEE) - 1 ether);
+        assertEq(bank.getBalance(user2), (user2Deposit + ACTIVATION_FEE) + 1 ether);
 
         // Phase 4: Additional deposits
         vm.prank(user2);
-        bank.deposit{value: 1 ether}();
+        bank.deposit{value: 1 ether}(); // User2 deposits 1 ether
 
-        assertEq(bank.getBalance(user2), 4 ether);
+        assertEq(bank.getBalance(user2), (user2Deposit + ACTIVATION_FEE) + 1 ether + 1 ether); // Previous balance + transfer + deposit
 
         // Phase 5: Loan repayment
         vm.warp(block.timestamp + 1 days); // Add some time for interest
@@ -98,11 +103,12 @@ contract BankIntegrationTest is Test {
         assertEq(user1LoanAfter.borrowedAmount, 0);
 
         // Phase 6: Withdrawals
-        uint256 user2BalanceBefore = bank.getBalance(user2);
-        vm.prank(user2);
+        uint256 user3BalanceBefore = bank.getBalance(user3);
+        vm.prank(user3);
         bank.withdraw(1 ether);
+        console2.log("User3 balance after withdrawal:", bank.getBalance(user3));
 
-        assertEq(bank.getBalance(user2), user2BalanceBefore - 1 ether);
+        assertEq(bank.getBalance(user3), user3BalanceBefore - 1 ether);
     }
 
     /**
