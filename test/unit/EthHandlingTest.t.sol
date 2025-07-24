@@ -39,6 +39,19 @@ contract EthHandlingTest is Test {
         vm.deal(user2, 10 ether);
     }
 
+    // ================================= Modifiers =========================================
+
+    /**
+     * @dev Modifier to create an account for a user with a predefined deposit amount.
+     * It can be used in test functions to ensure the user has an account before performing actions.
+     */
+    modifier createAnAccount(address _user) {
+        vm.startPrank(_user);
+        bank.createAccount{value: USER_DEPOSIT_AMOUNT}();
+        vm.stopPrank();
+        _;
+    }
+
     // ============================== Tests for Create An Account Functionality =========================================
     /**
      * @dev Test to verify creating a new account
@@ -128,7 +141,7 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify ETH deposit directly to BankAccount
      */
-    function test_DepositEthDirectly() public {
+    function test_DepositEthDirectly() public createAnAccount(user1) {
         console.log("=== Deposit ETH Directly to BankAccount Contract Test ===");
         vm.startPrank(user1);
 
@@ -153,7 +166,7 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify ETH deposit through Bank contract
      */
-    function test_DepositEthThroughBank() public {
+    function test_DepositEthThroughBank() public createAnAccount(user1) {
         console.log("=== Deposit ETH Through Bank Contract Test ===");
 
         vm.startPrank(user1);
@@ -190,7 +203,7 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify Deposit event is emitted when depositing ETH
      */
-    function test_DepositEventEmitted() public {
+    function test_DepositEventEmitted() public createAnAccount(user1) {
         console.log("=== Deposit Event Emitted Test ===");
 
         vm.startPrank(user1);
@@ -210,7 +223,7 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify of send 0 ETH to BankAccount it should be reverted
      */
-    function test_SendZeroEthReverts() public {
+    function test_SendZeroEthReverts() public createAnAccount(user1) {
         console.log("=== Send 0 ETH to BankAccount Reverts Test ===");
 
         vm.startPrank(user1);
@@ -227,7 +240,7 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify user address is valid when depositing ETH
      */
-    function test_ValidUserAddressOnDeposit() public {
+    function test_ValidUserAddressOnDeposit() public createAnAccount(user1) {
         console.log("=== Valid User Address on Deposit Test ===");
 
         vm.startPrank(user1);
@@ -248,7 +261,7 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify ETH withdrawal from BankAccount
      */
-    function test_WithdrawEthFromBankAccount() public {
+    function test_WithdrawEthFromBankAccount() public createAnAccount(user1) {
         console.log("=== Withdraw ETH from BankAccount Test ===");
         vm.startPrank(user1);
         uint256 depositAmount = 2 ether;
@@ -286,7 +299,7 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify withdrawal reverts if insufficient balance
      */
-    function test_WithdrawInsufficientBalanceReverts() public {
+    function test_WithdrawInsufficientBalanceReverts() public createAnAccount(user1) {
         console.log("=== Withdraw Insufficient Balance Reverts Test ===");
 
         vm.startPrank(user1);
@@ -303,7 +316,7 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify Withdrawal event is emitted when withdrawing ETH
      */
-    function test_WithdrawalEventEmitted() public {
+    function test_WithdrawalEventEmitted() public createAnAccount(user1) {
         console.log("=== Withdrawal Event Emitted Test ===");
 
         vm.startPrank(user1);
@@ -327,7 +340,7 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify user address is valid when withdrawing ETH
      */
-    function test_ValidUserAddressOnWithdraw() public {
+    function test_ValidUserAddressOnWithdraw() public createAnAccount(user1) {
         console.log("=== Valid User Address on Withdraw Test ===");
 
         vm.startPrank(user1);
@@ -348,7 +361,7 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify transferring funds between accounts
      */
-    function test_TransferFundsBetweenAccounts() public {
+    function test_TransferFundsBetweenAccounts() public createAnAccount(user1) {
         console.log("=== Transfer Funds Between Accounts Test ===");
 
         vm.startPrank(user1);
@@ -386,7 +399,7 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify transfer reverts if insufficient balance
      */
-    function test_TransferInsufficientBalanceReverts() public {
+    function test_TransferInsufficientBalanceReverts() public createAnAccount(user1) {
         console.log("=== Transfer Insufficient Balance Reverts Test ===");
 
         vm.startPrank(user1);
@@ -403,7 +416,7 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify Transfer event is emitted when transferring funds
      */
-    function test_TransferEventEmitted() public {
+    function test_TransferEventEmitted() public createAnAccount(user1) {
         console.log("=== Transfer Event Emitted Test ===");
 
         vm.startPrank(user1);
@@ -427,7 +440,7 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify user address is valid when transferring ETH
      */
-    function test_ValidUserAddressOnTransfer() public {
+    function test_ValidUserAddressOnTransfer() public createAnAccount(user1) {
         console.log("=== Valid User Address on Transfer Test ===");
 
         vm.startPrank(user1);
@@ -446,7 +459,7 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify user address is valid when transferring ETH
      */
-    function test_ValidUserAddressOnTransferBySecondUser() public {
+    function test_ValidUserAddressOnTransferBySecondUser() public createAnAccount(user1) {
         console.log("=== Valid User Address on Transfer Test ===");
 
         vm.startPrank(user1);
