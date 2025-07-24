@@ -1,8 +1,8 @@
-# Simple Bank - Foundry
+# 🏦 Simple Bank - Foundry
 
 A comprehensive decentralized banking application built with Solidity and Foundry Framework. This project demonstrates advanced smart contract development with proper access controls, testing, and deployment automation.
 
-## Features
+## ✨ Features
 
 - [x] Create a new bank account with minimum balance requirement
 - [x] Deposit funds into an account
@@ -15,25 +15,25 @@ A comprehensive decentralized banking application built with Solidity and Foundr
 - [x] Role-based access control
 - [x] Comprehensive event logging
 
-## Architecture
+## 🏗️ Architecture
 
 The system consists of two main contracts:
 
-### BankAccount.sol
+### 📋 BankAccount.sol
 
 - Handles core banking operations (deposits, withdrawals, transfers)
 - Manages user account balances and creation
 - Implements access control for admin functions
 - Processes loan payments and receipts
 
-### Bank.sol
+### 🏛️ Bank.sol
 
 - Manages the borrowing and lending system
 - Handles account activation/freezing
 - Calculates interest on borrowed funds
 - Integrates with BankAccount for loan operations
 
-## Tools & Technologies
+## 🛠️ Tools & Technologies
 
 - **Foundry Framework** - Development, testing, and deployment
 - **Solidity ^0.8.24** - Smart contract language
@@ -41,7 +41,7 @@ The system consists of two main contracts:
 - **Forge** - Testing framework
 - **Cast** - Blockchain interaction tool
 
-## Project Structure
+## 📁 Project Structure
 
 ```md
 ├── src/
@@ -52,7 +52,9 @@ The system consists of two main contracts:
 ├── test/
 │   └── unit/
 │       ├── AccessControlTest.t.sol  # Tests for role-based access control
+│       ├── AccountActivation.t.sol  # Tests for account activation and freezing
 │       ├── BankAccountTest.t.sol    # Tests for BankAccount contract edge cases and errors
+│       ├── BankTest.t.sol           # Tests for Bank contract edge cases and validations
 │       ├── BorrowAndPayTest.t.sol   # Tests for borrowing and payment functionality
 │       └── EthHandlingTest.t.sol    # Tests for ETH deposits, withdrawals, transfers
 ├── script/
@@ -70,14 +72,14 @@ The system consists of two main contracts:
 └── foundry.toml                    # Foundry configuration
 ```
 
-## Quick Start
+## 🚀 Quick Start
 
-### Prerequisites
+### 📋 Prerequisites
 
 - [Foundry](https://book.getfoundry.sh/getting-started/installation)
 - Git
 
-### Installation
+### 📦 Installation
 
 ```bash
 # Clone the repository
@@ -91,7 +93,7 @@ forge install
 forge build
 ```
 
-### Testing
+### 🧪 Testing
 
 ```bash
 # Run all tests
@@ -116,9 +118,9 @@ forge coverage
 forge coverage --report lcov
 ```
 
-### Deployment
+### 🚀 Deployment
 
-#### Local Deployment (Anvil)
+#### 🏠 Local Deployment (Anvil)
 
 ```bash
 # Start local blockchain
@@ -131,7 +133,7 @@ forge script script/DeployBankSystem.s.sol:DeployBankSystem \
   --broadcast
 ```
 
-#### Testnet/Mainnet Deployment
+#### 🌐 Testnet/Mainnet Deployment
 
 ```bash
 # Set environment variables
@@ -146,22 +148,22 @@ forge script script/DeployBankSystem.s.sol:DeployBankSystem \
   --verify
 ```
 
-## Key Features in Detail
+## 🔧 Key Features in Detail
 
-### Borrowing System
+### 💰 Borrowing System
 
 - Interest rate calculation (5% annual rate)
 - Maximum borrowing limits (100 ETH)
 - 30-day loan terms
 - Automatic due date tracking
 
-### Access Control
+### 🔐 Access Control
 
 - Role-based permissions using OpenZeppelin AccessControl
 - Admin functions for loan management
 - Account freezing/activation capabilities
 
-### Security Features
+### 🛡️ Security Features
 
 - Input validation on all functions
 - Reentrancy protection
@@ -170,7 +172,7 @@ forge script script/DeployBankSystem.s.sol:DeployBankSystem \
 - **99.15% test coverage** for Bank.sol with comprehensive edge case testing
 - **100% test coverage** for BankAccount.sol ensuring all edge cases are tested
 
-## Testing Coverage
+## 📊 Testing Coverage
 
 The project includes comprehensive test coverage across all contracts:
 
@@ -181,7 +183,7 @@ The project includes comprehensive test coverage across all contracts:
 - Event emission verification
 - Edge case and error condition testing
 
-### Current Test Status
+### 📈 Current Test Status
 
 ```md
 ╭-------------------+--------+--------+---------╮
@@ -203,7 +205,7 @@ The project includes comprehensive test coverage across all contracts:
 
 Total: **101 tests passed** ✅
 
-### Code Coverage
+### 📊 Code Coverage
 
 ```md
 ╭-------------------------+----------+-----------+-----------+---------╮
@@ -222,7 +224,7 @@ Total: **101 tests passed** ✅
 - **BankAccount.sol**: 100% coverage across all metrics
 - **Bank.sol**: 99.15% lines, 99.04% statements, 93.75% branches, 100% functions
 
-### Test Categories
+### 🧪 Test Categories
 
 - **AccessControlTest (3 tests)**: Role-based permissions and owner verification
 - **AccountActivation (11 tests)**: Account activation, freezing, and authorization testing
@@ -231,18 +233,18 @@ Total: **101 tests passed** ✅
 - **BorrowAndPayTest (27 tests)**: Borrowing system, interest calculation, loan management, due date handling
 - **EthHandlingTest (22 tests)**: Account creation, deposits, withdrawals, transfers, validations
 
-## Documentation
+## 📚 Documentation
 
 - [DEPLOYMENT.md](DEPLOYMENT.md) - Comprehensive deployment guide
 - [MIGRATION_SUMMARY.md](MIGRATION_SUMMARY.md) - Recent system updates
 - [Foundry Book](https://book.getfoundry.sh/) - Foundry documentation
 
-## Author
+## 👨‍💻 Author
 
 Kavinda Rathnayake
 
 - GitHub: [@kavinda-100](https://github.com/kavinda-100)
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
