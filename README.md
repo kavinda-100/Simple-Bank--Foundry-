@@ -2,7 +2,7 @@
 
 A comprehensive decentralized banking application built with Solidity and Foundry Framework. This project demonstrates advanced smart contract development with proper access controls, testing, and deployment automation.Total: **118 tests passed** ✅
 
-## Features
+## ✨ Features
 
 - [x] Create a new bank account with minimum balance requirement
 - [x] Deposit funds into an account
