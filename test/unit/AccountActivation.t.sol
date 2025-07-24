@@ -61,6 +61,13 @@ contract BorrowAndPayTest is Test {
     }
 
     /**
-     * @dev Test to verify that a user can deposit funds into their account if their account is active.
+     * @dev Test to verify that a when user activates their account, it emits the AccountActivated event.
      */
+    function test_AccountActivatedEventEmitted() public {
+        vm.startPrank(user1);
+        vm.expectEmit(true, true, true, true);
+        emit AccountActivated(user1);
+        bank.createAccount{value: USER_DEPOSIT_AMOUNT}();
+        vm.stopPrank();
+    }
 }
