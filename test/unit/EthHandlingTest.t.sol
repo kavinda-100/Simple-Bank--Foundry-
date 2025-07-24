@@ -124,12 +124,13 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify creating an account with BankAccount__AccountAlreadyExists reverts
      */
-    function test_CreateAccountWithExistingAccountReverts() public {
+    function test_CreateAccountWithExistingAccountReverts() public createAnAccount(user1) {
         console.log("=== Create Account With Existing Account Reverts Test ===");
-        vm.startPrank(user1);
 
-        // Create the account first
-        bank.createAccount{value: USER_DEPOSIT_AMOUNT}();
+        // Give user1 more ETH to ensure they have enough for the second attempt
+        vm.deal(user1, USER_DEPOSIT_AMOUNT);
+
+        vm.startPrank(user1);
 
         // Try to create the account again
         vm.expectRevert(BankAccount.BankAccount__AccountAlreadyExists.selector);
@@ -311,7 +312,7 @@ contract EthHandlingTest is Test {
         vm.expectRevert(BankAccount.BankAccount__InsufficientBalance.selector);
 
         // Attempt to withdraw more than deposited amount
-        bank.withdraw(1 ether);
+        bank.withdraw(400 ether);
 
         vm.stopPrank();
     }
@@ -414,7 +415,7 @@ contract EthHandlingTest is Test {
         vm.expectRevert(BankAccount.BankAccount__InsufficientBalance.selector);
 
         // Attempt to transfer more than deposited amount
-        bank.transferFunds(user2, 1 ether);
+        bank.transferFunds(user2, 400 ether);
 
         vm.stopPrank();
     }
