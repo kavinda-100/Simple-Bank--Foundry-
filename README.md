@@ -1,6 +1,6 @@
 # 🏦 Simple Bank - Foundry
 
-A comprehensive decentralized banking application built with Solidity and Foundry Framework. This project demonstrates advanced smart contract development with proper access controls, testing, and deployment automation.
+A comprehensive decentralized banking application built with Solidity and Foundry Framework. This project demonstrates advanced smart contract development with proper access controls, testing, and deployment automation.Total: **118 tests passed** ✅
 
 ## ✨ Features
 
@@ -32,6 +32,30 @@ The system consists of two main contracts:
 - Handles account activation/freezing
 - Calculates interest on borrowed funds
 - Integrates with BankAccount for loan operations
+  
+## 🔧 Key Features in Detail
+
+### 💰 Borrowing System
+
+- Interest rate calculation (5% annual rate)
+- Maximum borrowing limits (100 ETH)
+- 30-day loan terms
+- Automatic due date tracking
+
+### 🔐 Access Control
+
+- Role-based permissions using OpenZeppelin AccessControl
+- Admin functions for loan management
+- Account freezing/activation capabilities
+
+### 🛡️ Security Features
+
+- Input validation on all functions
+- Reentrancy protection
+- Proper error handling with custom errors
+- Comprehensive event logging
+- **99.15% test coverage** for Bank.sol with comprehensive edge case testing
+- **100% test coverage** for BankAccount.sol ensuring all edge cases are tested
 
 ## 🛠️ Tools & Technologies
 
@@ -50,13 +74,19 @@ The system consists of two main contracts:
 │   └── interfaces/
 │       └── IBankAccount.sol        # Interface for BankAccount contract
 ├── test/
-│   └── unit/
-│       ├── AccessControlTest.t.sol  # Tests for role-based access control
-│       ├── AccountActivation.t.sol  # Tests for account activation and freezing
-│       ├── BankAccountTest.t.sol    # Tests for BankAccount contract edge cases and errors
-│       ├── BankTest.t.sol           # Tests for Bank contract edge cases and validations
-│       ├── BorrowAndPayTest.t.sol   # Tests for borrowing and payment functionality
-│       └── EthHandlingTest.t.sol    # Tests for ETH deposits, withdrawals, transfers
+│   ├── unit/                        # Unit tests for individual contract functions
+│   │   ├── AccessControlTest.t.sol  # Tests for role-based access control
+│   │   ├── AccountActivation.t.sol  # Tests for account activation and freezing
+│   │   ├── BankAccountTest.t.sol    # Tests for BankAccount contract edge cases and errors
+│   │   ├── BankTest.t.sol           # Tests for Bank contract edge cases and validations
+│   │   ├── BorrowAndPayTest.t.sol   # Tests for borrowing and payment functionality
+│   │   └── EthHandlingTest.t.sol    # Tests for ETH deposits, withdrawals, transfers
+│   ├── fuzz/                        # Fuzz tests for property-based testing
+│   │   └── BankFuzzTest.t.sol       # Fuzz tests for edge cases with random inputs
+│   ├── invariant/                   # Invariant tests for critical properties
+│   │   └── BankInvariantTest.t.sol  # Tests that critical properties always hold
+│   └── integration/                 # Integration tests for end-to-end workflows
+│       └── BankIntegrationTest.t.sol # Tests for complex multi-user scenarios
 ├── script/
 │   ├── DeployBankSystem.s.sol      # Complete system deployment (recommended)
 │   └── deprecated/
@@ -95,6 +125,83 @@ forge build
 
 ### 🧪 Testing
 
+### 📊 Code Coverage
+
+```md
+╭-------------------------+----------+-----------+-----------+---------╮
+| File                    | % Lines  | % Stmts   | % Branch  | % Funcs |
++=================================================================+
+| src/Bank.sol            | 99.15%   | 99.04%    | 93.75%    | 100.00% |
+|-------------------------+----------+-----------+-----------+---------|
+| src/BankAccount.sol     | 100.00%  | 100.00%   | 100.00%   | 100.00% |
+|-------------------------+----------+-----------+-----------+---------|
+| DeployBankSystem.s.sol  | 100.00%  | 100.00%   | 100.00%   | 100.00% |
+╰-------------------------+----------+-----------+-----------+---------╯
+```
+
+**Both main contracts have achieved near-perfect test coverage!** 🎉
+
+- **BankAccount.sol**: 100% coverage across all metrics
+- **Bank.sol**: 99.15% lines, 99.04% statements, 93.75% branches, 100% functions
+
+### 📈 Current Test Status
+
+```md
+╭-----------------------+--------+--------+---------╮
+| Test Suite            | Passed | Failed | Skipped |
++===================================================+
+| BankFuzzTest          | 5      | 0      | 0       |
+|-----------------------+--------+--------+---------|
+| BankIntegrationTest   | 5      | 0      | 0       |
+|-----------------------+--------+--------+---------|
+| BankInvariantTest     | 7      | 0      | 0       |
+|-----------------------+--------+--------+---------|
+| AccessControlTest     | 3      | 0      | 0       |
+|-----------------------+--------+--------+---------|
+| AccountActivationTest | 11     | 0      | 0       |
+|-----------------------+--------+--------+---------|
+| BankAccountTest       | 19     | 0      | 0       |
+|-----------------------+--------+--------+---------|
+| BankTest              | 19     | 0      | 0       |
+|-----------------------+--------+--------+---------|
+| BorrowAndPayTest      | 27     | 0      | 0       |
+|-----------------------+--------+--------+---------|
+| EthHandlingTest       | 22     | 0      | 0       |
+╰-----------------------+--------+--------+---------╯
+```
+
+Total: **118 tests passed** ✅
+
+### 🧪 Test Categories
+
+#### Unit Tests (101 tests)
+
+- **AccessControlTest (3 tests)**: Role-based permissions and owner verification
+- **AccountActivationTest (11 tests)**: Account activation, freezing, and authorization testing
+- **BankAccountTest (19 tests)**: Direct BankAccount contract testing including edge cases, error conditions, invalid inputs, and transfer failures
+- **BankTest (19 tests)**: Comprehensive Bank contract testing including zero address validations, transfer failures, unauthorized operations, and complex edge cases
+- **BorrowAndPayTest (27 tests)**: Borrowing system, interest calculation, loan management, due date handling
+- **EthHandlingTest (22 tests)**: Account creation, deposits, withdrawals, transfers, validations
+
+#### Advanced Testing (17 tests)
+
+- **BankFuzzTest (5 tests)**: Property-based testing with random inputs to discover edge cases in deposits, borrowing, transfers, withdrawals, and interest calculations
+- **BankInvariantTest (7 tests)**: Critical property validation ensuring bank solvency, balance consistency, interest bounds, and system integrity
+- **BankIntegrationTest (5 tests)**: End-to-end workflow testing including complete lending cycles, concurrent borrowing, account management, and stress testing.
+
+## 📊 Testing Coverage
+
+The project includes comprehensive test coverage across all contracts with **multiple testing methodologies**:
+
+- **118 total test cases** covering all functionality across 4 test categories
+- **Unit tests (101 tests)** for individual contract functions
+- **Fuzz tests (5 tests)** for property-based testing with random inputs
+- **Invariant tests (7 tests)** for critical property validation
+- **Integration tests (5 tests)** for end-to-end workflow testing
+- Access control and security testing
+- Event emission verification
+- Edge case and error condition testing
+
 ```bash
 # Run all tests
 forge test
@@ -116,6 +223,34 @@ forge coverage
 
 # Generate detailed coverage report
 forge coverage --report lcov
+```
+
+Additional Testing
+
+- 🎲 **Fuzz Testing**: Adds robustness against unexpected inputs
+- ⚖️ **Invariant Testing**: Ensures critical properties always hold
+- 🔗 **Integration Testing**: Validates complex real-world scenarios
+
+## 📦 Commands to Run Each Test Type
+
+```bash
+# Run all unit tests
+forge test --match-path "test/unit/*" -v
+
+# Run fuzz tests
+forge test --match-path "test/fuzz/*" -v
+
+# Run invariant tests
+forge test --match-path "test/invariant/*" -v
+
+# Run integration tests
+forge test --match-path "test/integration/*" -v
+
+# Run all tests
+forge test --summary
+
+# Generate coverage report
+forge coverage
 ```
 
 ### 🚀 Deployment
@@ -148,95 +283,9 @@ forge script script/DeployBankSystem.s.sol:DeployBankSystem \
   --verify
 ```
 
-## 🔧 Key Features in Detail
-
-### 💰 Borrowing System
-
-- Interest rate calculation (5% annual rate)
-- Maximum borrowing limits (100 ETH)
-- 30-day loan terms
-- Automatic due date tracking
-
-### 🔐 Access Control
-
-- Role-based permissions using OpenZeppelin AccessControl
-- Admin functions for loan management
-- Account freezing/activation capabilities
-
-### 🛡️ Security Features
-
-- Input validation on all functions
-- Reentrancy protection
-- Proper error handling with custom errors
-- Comprehensive event logging
-- **99.15% test coverage** for Bank.sol with comprehensive edge case testing
-- **100% test coverage** for BankAccount.sol ensuring all edge cases are tested
-
-## 📊 Testing Coverage
-
-The project includes comprehensive test coverage across all contracts:
-
-- **101 test cases** covering all functionality
-- Unit tests for individual contract functions
-- Integration tests for contract interactions
-- Access control and security testing
-- Event emission verification
-- Edge case and error condition testing
-
-### 📈 Current Test Status
-
-```md
-╭-------------------+--------+--------+---------╮
-| Test Suite        | Passed | Failed | Skipped |
-+===============================================+
-| AccessControlTest | 3      | 0      | 0       |
-|-------------------+--------+--------+---------|
-| AccountActivation | 11     | 0      | 0       |
-|-------------------+--------+--------+---------|
-| BankAccountTest   | 19     | 0      | 0       |
-|-------------------+--------+--------+---------|
-| BankTest          | 19     | 0      | 0       |
-|-------------------+--------+--------+---------|
-| BorrowAndPayTest  | 27     | 0      | 0       |
-|-------------------+--------+--------+---------|
-| EthHandlingTest   | 22     | 0      | 0       |
-╰-------------------+--------+--------+---------╯
-```
-
-Total: **101 tests passed** ✅
-
-### 📊 Code Coverage
-
-```md
-╭-------------------------+----------+-----------+-----------+---------╮
-| File                    | % Lines  | % Stmts   | % Branch  | % Funcs |
-+=================================================================+
-| src/Bank.sol            | 99.15%   | 99.04%    | 93.75%    | 100.00% |
-|-------------------------+----------+-----------+-----------+---------|
-| src/BankAccount.sol     | 100.00%  | 100.00%   | 100.00%   | 100.00% |
-|-------------------------+----------+-----------+-----------+---------|
-| DeployBankSystem.s.sol  | 100.00%  | 100.00%   | 100.00%   | 100.00% |
-╰-------------------------+----------+-----------+-----------+---------╯
-```
-
-**Both main contracts have achieved near-perfect test coverage!** 🎉
-
-- **BankAccount.sol**: 100% coverage across all metrics
-- **Bank.sol**: 99.15% lines, 99.04% statements, 93.75% branches, 100% functions
-
-### 🧪 Test Categories
-
-- **AccessControlTest (3 tests)**: Role-based permissions and owner verification
-- **AccountActivation (11 tests)**: Account activation, freezing, and authorization testing
-- **BankAccountTest (19 tests)**: Direct BankAccount contract testing including edge cases, error conditions, invalid inputs, and transfer failures
-- **BankTest (19 tests)**: Comprehensive Bank contract testing including zero address validations, transfer failures, unauthorized operations, and complex edge cases
-- **BorrowAndPayTest (27 tests)**: Borrowing system, interest calculation, loan management, due date handling
-- **EthHandlingTest (22 tests)**: Account creation, deposits, withdrawals, transfers, validations
-
 ## 📚 Documentation
 
 - [DEPLOYMENT.md](DEPLOYMENT.md) - Comprehensive deployment guide
-- [MIGRATION_SUMMARY.md](MIGRATION_SUMMARY.md) - Recent system updates
 - [Foundry Book](https://book.getfoundry.sh/) - Foundry documentation
 
 ## 👨‍💻 Author
