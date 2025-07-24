@@ -141,7 +141,7 @@ forge build
 **Both main contracts have achieved near-perfect test coverage!** 🎉
 
 - **BankAccount.sol**: 100% coverage across all metrics
-- **Bank.sol**: 99.15% lines, 99.04% statements, 93.75% branches, 100% 
+- **Bank.sol**: 99.15% lines, 99.04% statements, 93.75% branches, 100% functions
 
 ### 📈 Current Test Status
 
