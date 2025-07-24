@@ -20,7 +20,9 @@ contract EthHandlingTest is Test {
     address public user2 = address(0x456);
 
     // constants
-    uint256 constant USER_DEPOSIT_AMOUNT = 2 ether;
+    // constants
+    uint256 constant USER_INITIAL_BALANCE = 300 ether;
+    uint256 constant USER_DEPOSIT_AMOUNT = 200 ether;
 
     // Events ---------------------------------------------------------------------------------------------
     event Deposit(address indexed owner, uint256 amount); // Event emitted when a deposit is made
@@ -35,8 +37,8 @@ contract EthHandlingTest is Test {
         (bankAccount, bank, deployer) = deployBankSystemScript.run();
 
         // Give test users some ETH to work with
-        vm.deal(user1, 10 ether);
-        vm.deal(user2, 10 ether);
+        vm.deal(user1, USER_INITIAL_BALANCE);
+        vm.deal(user2, USER_INITIAL_BALANCE);
     }
 
     // ================================= Modifiers =========================================
@@ -147,6 +149,8 @@ contract EthHandlingTest is Test {
 
         uint256 depositAmount = 1 ether;
         uint256 initialBalance = user1.balance;
+        uint256 initialAccountBalance = bankAccount.getBalance(user1);
+        uint256 initialContractBalance = address(bankAccount).balance;
 
         // Deposit ETH directly to BankAccount
         bankAccount.deposit{value: depositAmount}(user1);
@@ -154,11 +158,11 @@ contract EthHandlingTest is Test {
         // Check user's ETH balance decreased
         assertEq(user1.balance, initialBalance - depositAmount);
 
-        // Check user's account balance increased
-        assertEq(bankAccount.getBalance(user1), depositAmount);
+        // Check user's account balance increased by the deposit amount
+        assertEq(bankAccount.getBalance(user1), initialAccountBalance + depositAmount);
 
-        // Check contract received the ETH
-        assertEq(address(bankAccount).balance, depositAmount);
+        // Check contract balance increased by the deposit amount
+        assertEq(address(bankAccount).balance, initialContractBalance + depositAmount);
 
         vm.stopPrank();
     }
@@ -173,10 +177,13 @@ contract EthHandlingTest is Test {
 
         uint256 depositAmount = 2 ether;
         uint256 initialBalance = user1.balance;
+        uint256 initialAccountBalance = bankAccount.getBalance(user1);
+        uint256 initialBankAccountBalance = address(bankAccount).balance;
 
         console.log("Before deposit: ===================");
         console.log("User1 initial balance:", initialBalance);
-        console.log("BankAccount initial balance:", address(bankAccount).balance);
+        console.log("User1 initial account balance:", initialAccountBalance);
+        console.log("BankAccount initial balance:", initialBankAccountBalance);
         console.log("Bank initial balance:", address(bank).balance);
 
         // Deposit ETH through Bank contract
@@ -191,11 +198,11 @@ contract EthHandlingTest is Test {
         // Check user's ETH balance decreased
         assertEq(user1.balance, initialBalance - depositAmount);
 
-        // Check user's account balance increased
-        assertEq(bankAccount.getBalance(user1), depositAmount);
+        // Check user's account balance increased by the deposit amount
+        assertEq(bankAccount.getBalance(user1), initialAccountBalance + depositAmount);
 
-        // Check BankAccount contract received the ETH
-        assertEq(address(bankAccount).balance, depositAmount);
+        // Check BankAccount contract balance increased by the deposit amount
+        assertEq(address(bankAccount).balance, initialBankAccountBalance + depositAmount);
 
         vm.stopPrank();
     }
@@ -264,15 +271,12 @@ contract EthHandlingTest is Test {
     function test_WithdrawEthFromBankAccount() public createAnAccount(user1) {
         console.log("=== Withdraw ETH from BankAccount Test ===");
         vm.startPrank(user1);
-        uint256 depositAmount = 2 ether;
         uint256 withdrawAmount = 1 ether;
 
-        // Deposit ETH to withdraw later
-        bank.deposit{value: depositAmount}();
+        uint256 user1BalanceBefore = bank.getBalance(user1);
 
         // Check initial balances
         console.log("Before withdrawal: ===================");
-        console.log("User1 balance:", user1.balance);
         console.log("User1 account balance:", bankAccount.getBalance(user1));
         console.log("BankAccount contract balance:", address(bankAccount).balance);
         console.log("Bank contract balance:", address(bank).balance);
@@ -282,16 +286,15 @@ contract EthHandlingTest is Test {
 
         // Check final balances
         console.log("After withdrawal: ===================");
-        console.log("User1 balance:", user1.balance);
         console.log("User1 account balance:", bankAccount.getBalance(user1));
         console.log("BankAccount contract balance:", address(bankAccount).balance);
         console.log("Bank contract balance:", address(bank).balance);
 
         // Check user's account balance decreased
-        assertEq(bankAccount.getBalance(user1), depositAmount - withdrawAmount);
+        assertEq(bank.getBalance(user1), user1BalanceBefore - withdrawAmount);
 
         // Check BankAccount contract balance decreased
-        assertEq(address(bankAccount).balance, depositAmount - withdrawAmount);
+        assertEq(address(bankAccount).balance, user1BalanceBefore - withdrawAmount);
 
         vm.stopPrank();
     }
@@ -372,12 +375,15 @@ contract EthHandlingTest is Test {
         // Deposit ETH to transfer later
         bankAccount.deposit{value: depositAmount}(user1);
 
-        // Check initial balances
+        // Check balances before transfer
+        uint256 user1BalanceBeforeTransfer = bankAccount.getBalance(user1);
+        uint256 user2BalanceBeforeTransfer = bankAccount.getBalance(user2);
+
         console.log("Before transfer: ===================");
         console.log("User1 balance:", user1.balance);
         console.log("User2 balance:", user2.balance);
-        console.log("User1 account balance:", bankAccount.getBalance(user1));
-        console.log("User2 account balance:", bankAccount.getBalance(user2));
+        console.log("User1 account balance:", user1BalanceBeforeTransfer);
+        console.log("User2 account balance:", user2BalanceBeforeTransfer);
 
         // Transfer funds from user1 to user2
         bank.transferFunds(user2, transferAmount);
@@ -389,9 +395,9 @@ contract EthHandlingTest is Test {
         console.log("User1 account balance:", bankAccount.getBalance(user1));
         console.log("User2 account balance:", bankAccount.getBalance(user2));
 
-        // Check user's account balances
-        assertEq(bankAccount.getBalance(user1), depositAmount - transferAmount);
-        assertEq(bankAccount.getBalance(user2), transferAmount);
+        // Check user's account balances changed correctly
+        assertEq(bankAccount.getBalance(user1), user1BalanceBeforeTransfer - transferAmount);
+        assertEq(bankAccount.getBalance(user2), user2BalanceBeforeTransfer + transferAmount);
 
         vm.stopPrank();
     }
@@ -479,21 +485,22 @@ contract EthHandlingTest is Test {
     /**
      * @dev Test to verify getBalance returns correct balance for user
      */
-    function test_GetBalance() public {
+    function test_GetBalance() public createAnAccount(user1) {
         console.log("=== Get Balance Test ===");
 
         vm.startPrank(user1);
 
         uint256 depositAmount = 2 ether;
+        uint256 InitialAccountBalance = bankAccount.getBalance(user1);
 
         // Deposit ETH to get balance
         bank.deposit{value: depositAmount}();
 
         // Check balance
-        uint256 balance = bankAccount.getBalance(user1);
-        console.log("User1 balance:", balance);
+        uint256 newBalance = bankAccount.getBalance(user1);
+        console.log("User1 balance:", newBalance);
 
-        assertEq(balance, depositAmount, "GetBalance return expected amount");
+        assertEq(newBalance, InitialAccountBalance + depositAmount, "GetBalance return expected amount");
 
         vm.stopPrank();
     }
