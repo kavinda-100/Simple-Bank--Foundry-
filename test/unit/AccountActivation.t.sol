@@ -171,4 +171,18 @@ contract AccountActivationTest is Test {
         bank.freezeAccount(user1);
         vm.stopPrank();
     }
+
+    /**
+     * @dev Test to verify that `freezeAccount` only can be called by the owner/admin of the Bank contract.
+     * It should revert with Bank__UnAuthorized if called by a non-admin.
+     */
+    function test_FreezeAccountUnauthorizedRevert() public createAnAccount(user1) {
+        vm.startPrank(user1);
+        // Attempt to freeze the account as a non-admin user
+        vm.expectRevert(Bank.Bank__UnAuthorized.selector);
+        bank.freezeAccount(user1);
+        // Check that the account is still active
+        assertTrue(bank.isAccountActive(user1), "Account should still be active as it was not frozen");
+        vm.stopPrank();
+    }
 }
