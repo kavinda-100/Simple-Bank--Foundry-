@@ -113,6 +113,10 @@ contract Bank is AccessControl {
      * @dev User sends ETH and Bank forwards it to BankAccount on behalf of the user.
      */
     function deposit() external payable {
+        // check if the user has an active account
+        if (!_isAccountActive(msg.sender)) {
+            revert Bank__AccountNotActive(); // Revert if the account is not active
+        }
         i_bankAccount.deposit{value: msg.value}(msg.sender);
     }
 
@@ -121,6 +125,10 @@ contract Bank is AccessControl {
      * @notice Function to withdraw ETH from the Bank.
      */
     function withdraw(uint256 _amount) external {
+        // check if the user has an active account
+        if (!_isAccountActive(msg.sender)) {
+            revert Bank__AccountNotActive(); // Revert if the account is not active
+        }
         i_bankAccount.withdraw(msg.sender, _amount);
     }
 
@@ -131,6 +139,10 @@ contract Bank is AccessControl {
      * @dev This only updates balances, no actual ETH is moved.
      */
     function transferFunds(address _to, uint256 _amount) external {
+        // check if the user has an active account
+        if (!_isAccountActive(msg.sender)) {
+            revert Bank__AccountNotActive(); // Revert if the account is not active
+        }
         i_bankAccount.transferFunds(msg.sender, _to, _amount);
     }
 

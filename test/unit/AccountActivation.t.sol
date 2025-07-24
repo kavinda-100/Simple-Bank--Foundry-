@@ -185,4 +185,66 @@ contract AccountActivationTest is Test {
         assertTrue(bank.isAccountActive(user1), "Account should still be active as it was not frozen");
         vm.stopPrank();
     }
+
+    // ================================= Test Account Freeze in deposit, withdraw, and transfer =================================
+
+    /**
+     * @dev Test to verify that if a user tries to deposit into a frozen account, it reverts with Bank__AccountNotActive.
+     */
+    function test_DepositIntoFrozenAccountRevert() public createAnAccount(user1) {
+        // Get the actual owner/admin of the Bank contract
+        address bankOwner = bank.owner();
+
+        vm.startPrank(bankOwner);
+        bank.freezeAccount(user1); // Freeze the account first
+        vm.stopPrank();
+
+        // Verify account is frozen
+        assertFalse(bank.isAccountActive(user1), "Account should be frozen");
+
+        vm.startPrank(user1);
+        vm.expectRevert(Bank.Bank__AccountNotActive.selector);
+        bank.deposit{value: 1 ether}();
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test to verify that if a user tries to withdraw from a frozen account, it reverts with Bank__AccountNotActive.
+     */
+    function test_WithdrawFromFrozenAccountRevert() public createAnAccount(user1) {
+        // Get the actual owner/admin of the Bank contract
+        address bankOwner = bank.owner();
+
+        vm.startPrank(bankOwner);
+        bank.freezeAccount(user1); // Freeze the account first
+        vm.stopPrank();
+
+        // Verify account is frozen
+        assertFalse(bank.isAccountActive(user1), "Account should be frozen");
+
+        vm.startPrank(user1);
+        vm.expectRevert(Bank.Bank__AccountNotActive.selector);
+        bank.withdraw(1 ether);
+        vm.stopPrank();
+    }
+
+    /**
+     * @dev Test to verify that if a user tries to transfer funds from a frozen account, it reverts with Bank__AccountNotActive.
+     */
+    function test_TransferFromFrozenAccountRevert() public createAnAccount(user1) {
+        // Get the actual owner/admin of the Bank contract
+        address bankOwner = bank.owner();
+
+        vm.startPrank(bankOwner);
+        bank.freezeAccount(user1); // Freeze the account first
+        vm.stopPrank();
+
+        // Verify account is frozen
+        assertFalse(bank.isAccountActive(user1), "Account should be frozen");
+
+        vm.startPrank(user1);
+        vm.expectRevert(Bank.Bank__AccountNotActive.selector);
+        bank.transferFunds(user2, 1 ether);
+        vm.stopPrank();
+    }
 }
