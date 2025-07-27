@@ -126,20 +126,49 @@ persist-state-info:
 # 🚀 DEPLOYMENT COMMANDS
 # ================================
 
+# Load .env variables for deployment
+# This command loads environment variables from .env file for deployment scripts
+load-env:
+	@if [ -f ".env" ]; then \
+		echo "🔄 Loading environment variables from .env file..."; \
+		export $$(cat .env | grep -v '^#' | xargs); \
+		echo "✅ Environment variables loaded"; \
+		echo "📍 LOCAL_RPC_URL: $$LOCAL_RPC_URL"; \
+		echo "📍 LOCAL_PRIVATE_KEY: $$(echo $$LOCAL_PRIVATE_KEY | cut -c1-10)..."; \
+	else \
+		echo "❌ No .env file found. Copy .env.example to .env and configure it."; \
+		exit 1; \
+	fi
+
 # Deploy to local Anvil (requires anvil to be running)
 deploy-local:
 	forge script script/DeployBankSystem.s.sol:DeployBankSystem \
-		--fork-url $(LOCAL_RPC_URL) \
-		--private-key $(LOCAL_PRIVATE_KEY) \
+		--fork-url http://localhost:8545 \
+		--private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
 		--broadcast
 
 # Deploy to local Anvil with verification
 deploy-local-verify:
 	forge script script/DeployBankSystem.s.sol:DeployBankSystem \
-		--fork-url $(LOCAL_RPC_URL) \
-		--private-key $(LOCAL_PRIVATE_KEY) \
+		--fork-url http://localhost:8545 \
+		--private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
 		--broadcast \
 		--verify
+
+# Deploy to local Anvil with environment loading
+deploy-local-env:
+	@if [ -f ".env" ]; then \
+		echo "📂 Loading .env file..."; \
+		export $$(cat .env | grep -v '^#' | xargs); \
+		echo "🚀 Deploying to local Anvil..."; \
+		forge script script/DeployBankSystem.s.sol:DeployBankSystem \
+			--fork-url $$LOCAL_RPC_URL \
+			--private-key $$LOCAL_PRIVATE_KEY \
+			--broadcast; \
+	else \
+		echo "❌ No .env file found. Using default values..."; \
+		make deploy-local; \
+	fi
 
 # Deploy to Sepolia testnet (requires SEPOLIA_RPC_URL and PRIVATE_KEY env vars)
 deploy-sepolia:
@@ -374,7 +403,9 @@ help:
 	@echo "  install           - Install dependencies"
 	@echo ""
 	@echo "🚀 DEPLOYMENT:"
-	@echo "  deploy-local      - Deploy to local Anvil"
+	@echo "  deploy-local      - Deploy to local Anvil (with defaults)"
+	@echo "  deploy-local-env  - Deploy to local Anvil (load from .env)"
+	@echo "  deploy-local-verify - Deploy to local Anvil with verification"
 	@echo "  deploy-sepolia    - Deploy to Sepolia testnet"
 	@echo "  deploy-goerli     - Deploy to Goerli testnet"
 	@echo "  simulate-deploy   - Simulate deployment"
@@ -418,7 +449,7 @@ help:
 # Phony targets
 .PHONY: test test-v test-vv test-vvv test-summary test-unit test-fuzz test-invariant test-integration \
         test-bank test-account test-borrow test-gas coverage coverage-report build clean install update \
-        deploy-local deploy-local-verify deploy-sepolia deploy-goerli deploy-mainnet simulate-deploy \
+        deploy-local deploy-local-verify deploy-local-env deploy-sepolia deploy-goerli deploy-mainnet simulate-deploy \
         anvil anvil-custom format format-check lint size docs balance send-eth call send \
         persist-state-dump persist-state-load persist-state-clean persist-state-info \
         bank-create-account bank-balance bank-deposit bank-withdraw bank-transfer bank-borrow bank-payback bank-borrower-details \
