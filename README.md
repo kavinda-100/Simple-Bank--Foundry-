@@ -283,6 +283,12 @@ forge script script/DeployBankSystem.s.sol:DeployBankSystem \
   --verify
 ```
 
+## 💻 UI Application
+
+The UI application is a web-based interface that allows users to interact with the Simple Bank system. It provides functionalities such as account creation, balance checking, deposits, withdrawals, and loan management.
+
+- UI - [Link to UI Application](https://github.com/kavinda-100/simple-bank-foundry-ui)
+
 ## 📚 Documentation
 
 - [DEPLOYMENT.md](DEPLOYMENT.md) - Comprehensive deployment guide
