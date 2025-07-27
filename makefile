@@ -81,21 +81,63 @@ update:
 	forge update
 
 # ================================
+# 🚀 PERSIST STATE COMMANDS
+# ================================
+
+# Start Anvil with state dumping (saves state when stopped)
+# This command starts a fresh Anvil instance that will save its state to state.json when stopped
+persist-state-dump:
+	@echo "🔄 Starting Anvil with state persistence..."
+	@echo "💾 State will be saved to state.json when you stop Anvil (Ctrl+C)"
+	anvil --dump-state state.json
+
+# Start Anvil and load previous state (if exists)
+# This command loads a previously saved state from state.json
+persist-state-load:
+	@if [ -f "state.json" ]; then \
+		echo "📂 Loading previous state from state.json..."; \
+		anvil --load-state state.json --dump-state state.json; \
+	else \
+		echo "📝 No previous state found (state.json), starting fresh with state persistence..."; \
+		anvil --dump-state state.json; \
+	fi
+
+# Clean state file
+persist-state-clean:
+	@if [ -f "state.json" ]; then \
+		echo "🧹 Removing state.json..."; \
+		rm state.json; \
+		echo "✅ State file cleaned"; \
+	else \
+		echo "📝 No state file found to clean"; \
+	fi
+
+# Show state file info
+persist-state-info:
+	@if [ -f "state.json" ]; then \
+		echo "📄 State file information:"; \
+		ls -lh state.json; \
+		echo "📊 File size: $$(du -h state.json | cut -f1)"; \
+	else \
+		echo "📝 No state file found"; \
+	fi
+
+# ================================
 # 🚀 DEPLOYMENT COMMANDS
 # ================================
 
 # Deploy to local Anvil (requires anvil to be running)
 deploy-local:
 	forge script script/DeployBankSystem.s.sol:DeployBankSystem \
-		--fork-url http://localhost:8545 \
-		--private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+		--fork-url $(LOCAL_RPC_URL) \
+		--private-key $(LOCAL_PRIVATE_KEY) \
 		--broadcast
 
 # Deploy to local Anvil with verification
 deploy-local-verify:
 	forge script script/DeployBankSystem.s.sol:DeployBankSystem \
-		--fork-url http://localhost:8545 \
-		--private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+		--fork-url $(LOCAL_RPC_URL) \
+		--private-key $(LOCAL_PRIVATE_KEY) \
 		--broadcast \
 		--verify
 
@@ -339,6 +381,10 @@ help:
 	@echo ""
 	@echo "🔧 UTILITIES:"
 	@echo "  anvil             - Start local Anvil node"
+	@echo "  persist-state-dump - Start Anvil with state dumping"
+	@echo "  persist-state-load - Start Anvil with state loading"
+	@echo "  persist-state-clean - Clean state file"
+	@echo "  persist-state-info - Show state file info"
 	@echo "  format            - Format code"
 	@echo "  size              - Check contract sizes"
 	@echo ""
@@ -374,5 +420,6 @@ help:
         test-bank test-account test-borrow test-gas coverage coverage-report build clean install update \
         deploy-local deploy-local-verify deploy-sepolia deploy-goerli deploy-mainnet simulate-deploy \
         anvil anvil-custom format format-check lint size docs balance send-eth call send \
+        persist-state-dump persist-state-load persist-state-clean persist-state-info \
         bank-create-account bank-balance bank-deposit bank-withdraw bank-transfer bank-borrow bank-payback bank-borrower-details \
         snapshot snapshot-diff storage abi-bank abi-account help
