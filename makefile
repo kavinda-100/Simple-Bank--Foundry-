@@ -113,20 +113,6 @@ deploy-sepolia:
 		--broadcast \
 		--verify
 
-# Deploy to Goerli testnet (requires GOERLI_RPC_URL and PRIVATE_KEY env vars)
-deploy-goerli:
-	@if [ -z "$(GOERLI_RPC_URL)" ] || [ -z "$(PRIVATE_KEY)" ]; then \
-		echo "❌ Error: GOERLI_RPC_URL and PRIVATE_KEY environment variables must be set"; \
-		echo "📝 Example: export GOERLI_RPC_URL=https://eth-goerli.g.alchemy.com/v2/YOUR_KEY"; \
-		echo "📝 Example: export PRIVATE_KEY=0x..."; \
-		exit 1; \
-	fi
-	forge script script/DeployBankSystem.s.sol:DeployBankSystem \
-		--fork-url $(GOERLI_RPC_URL) \
-		--private-key $(PRIVATE_KEY) \
-		--broadcast \
-		--verify
-
 # Deploy to mainnet (requires MAINNET_RPC_URL and PRIVATE_KEY env vars)
 deploy-mainnet:
 	@echo "⚠️  WARNING: You are about to deploy to MAINNET!"
@@ -142,11 +128,6 @@ deploy-mainnet:
 		--broadcast \
 		--verify
 
-# Simulate deployment without broadcasting
-simulate-deploy:
-	forge script script/DeployBankSystem.s.sol:DeployBankSystem \
-		--fork-url http://localhost:8545
-
 # ================================
 # 🔧 UTILITY COMMANDS
 # ================================
@@ -154,10 +135,6 @@ simulate-deploy:
 # Start local Anvil node
 anvil:
 	anvil
-
-# Start Anvil with custom settings
-anvil-custom:
-	anvil --accounts 10 --balance 1000 --gas-limit 12000000
 
 # Format code
 format:
