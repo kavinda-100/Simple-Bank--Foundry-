@@ -184,6 +184,7 @@ docs:
 # ================================
 
 # Check balance of an address (requires ADDRESS env var)
+# Usage: make balance ADDRESS=0x1234567890123456789012345678901234567890
 balance:
 	@if [ -z "$(ADDRESS)" ]; then \
 		echo "❌ Error: ADDRESS environment variable must be set"; \
@@ -193,15 +194,17 @@ balance:
 	cast balance $(ADDRESS) --rpc-url http://localhost:8545
 
 # Send ETH to an address (requires TO, AMOUNT, and optionally PRIVATE_KEY)
+# Usage: make send-eth TO=0x1234... AMOUNT=1ether PRIVATE_KEY=0x...
 send-eth:
 	@if [ -z "$(TO)" ] || [ -z "$(AMOUNT)" ]; then \
 		echo "❌ Error: TO and AMOUNT environment variables must be set"; \
-		echo "📝 Example: make send-eth TO=0x1234... AMOUNT=1ether"; \
+		echo "📝 Example: make send-eth TO=0x1234... AMOUNT=1ether PRIVATE_KEY=0x..."; \
 		exit 1; \
 	fi
 	cast send $(TO) --value $(AMOUNT) --private-key $(PRIVATE_KEY) --rpc-url http://localhost:8545
 
 # Call a contract function (requires CONTRACT, FUNCTION, and optionally ARGS)
+# Usage: make call CONTRACT=0x1234... FUNCTION="getBalance(address)" ARGS=0x5678...
 call:
 	@if [ -z "$(CONTRACT)" ] || [ -z "$(FUNCTION)" ]; then \
 		echo "❌ Error: CONTRACT and FUNCTION environment variables must be set"; \
@@ -211,13 +214,98 @@ call:
 	cast call $(CONTRACT) $(FUNCTION) $(ARGS) --rpc-url http://localhost:8545
 
 # Send a transaction to a contract (requires CONTRACT, FUNCTION, and optionally ARGS, PRIVATE_KEY)
+# Usage: make send CONTRACT=0x1234... FUNCTION="deposit()" PRIVATE_KEY=0x... ARGS="" VALUE=1ether
 send:
 	@if [ -z "$(CONTRACT)" ] || [ -z "$(FUNCTION)" ]; then \
 		echo "❌ Error: CONTRACT and FUNCTION environment variables must be set"; \
 		echo "📝 Example: make send CONTRACT=0x1234... FUNCTION=\"deposit()\" PRIVATE_KEY=0x..."; \
 		exit 1; \
 	fi
-	cast send $(CONTRACT) $(FUNCTION) $(ARGS) --private-key $(PRIVATE_KEY) --rpc-url http://localhost:8545
+	cast send $(CONTRACT) $(FUNCTION) $(ARGS) --private-key $(PRIVATE_KEY) --rpc-url http://localhost:8545 $(if $(VALUE),--value $(VALUE))
+
+# ================================
+# 🏦 BANK-SPECIFIC INTERACTION COMMANDS
+# ================================
+
+# Create a bank account (requires BANK_CONTRACT, PRIVATE_KEY, DEPOSIT_AMOUNT)
+# Usage: make bank-create-account BANK_CONTRACT=0x... PRIVATE_KEY=0x... DEPOSIT_AMOUNT=2ether
+bank-create-account:
+	@if [ -z "$(BANK_CONTRACT)" ] || [ -z "$(PRIVATE_KEY)" ] || [ -z "$(DEPOSIT_AMOUNT)" ]; then \
+		echo "❌ Error: BANK_CONTRACT, PRIVATE_KEY, and DEPOSIT_AMOUNT must be set"; \
+		echo "📝 Example: make bank-create-account BANK_CONTRACT=0x... PRIVATE_KEY=0x... DEPOSIT_AMOUNT=2ether"; \
+		exit 1; \
+	fi
+	cast send $(BANK_CONTRACT) "createAccount()" --private-key $(PRIVATE_KEY) --value $(DEPOSIT_AMOUNT) --rpc-url http://localhost:8545
+
+# Check bank balance (requires BANK_CONTRACT, USER_ADDRESS)
+# Usage: make bank-balance BANK_CONTRACT=0x... USER_ADDRESS=0x...
+bank-balance:
+	@if [ -z "$(BANK_CONTRACT)" ] || [ -z "$(USER_ADDRESS)" ]; then \
+		echo "❌ Error: BANK_CONTRACT and USER_ADDRESS must be set"; \
+		echo "📝 Example: make bank-balance BANK_CONTRACT=0x... USER_ADDRESS=0x..."; \
+		exit 1; \
+	fi
+	cast call $(BANK_CONTRACT) "getBalance(address)" $(USER_ADDRESS) --rpc-url http://localhost:8545
+
+# Deposit to bank (requires BANK_CONTRACT, PRIVATE_KEY, AMOUNT)
+# Usage: make bank-deposit BANK_CONTRACT=0x... PRIVATE_KEY=0x... AMOUNT=1ether
+bank-deposit:
+	@if [ -z "$(BANK_CONTRACT)" ] || [ -z "$(PRIVATE_KEY)" ] || [ -z "$(AMOUNT)" ]; then \
+		echo "❌ Error: BANK_CONTRACT, PRIVATE_KEY, and AMOUNT must be set"; \
+		echo "📝 Example: make bank-deposit BANK_CONTRACT=0x... PRIVATE_KEY=0x... AMOUNT=1ether"; \
+		exit 1; \
+	fi
+	cast send $(BANK_CONTRACT) "receive()" --private-key $(PRIVATE_KEY) --value $(AMOUNT) --rpc-url http://localhost:8545
+
+# Withdraw from bank (requires BANK_CONTRACT, PRIVATE_KEY, AMOUNT)
+# Usage: make bank-withdraw BANK_CONTRACT=0x... PRIVATE_KEY=0x... AMOUNT=1000000000000000000
+bank-withdraw:
+	@if [ -z "$(BANK_CONTRACT)" ] || [ -z "$(PRIVATE_KEY)" ] || [ -z "$(AMOUNT)" ]; then \
+		echo "❌ Error: BANK_CONTRACT, PRIVATE_KEY, and AMOUNT must be set"; \
+		echo "📝 Example: make bank-withdraw BANK_CONTRACT=0x... PRIVATE_KEY=0x... AMOUNT=1000000000000000000"; \
+		exit 1; \
+	fi
+	cast send $(BANK_CONTRACT) "withdraw(uint256)" $(AMOUNT) --private-key $(PRIVATE_KEY) --rpc-url http://localhost:8545
+
+# Transfer between bank accounts (requires BANK_CONTRACT, PRIVATE_KEY, TO_ADDRESS, AMOUNT)
+# Usage: make bank-transfer BANK_CONTRACT=0x... PRIVATE_KEY=0x... TO_ADDRESS=0x... AMOUNT=1000000000000000000
+bank-transfer:
+	@if [ -z "$(BANK_CONTRACT)" ] || [ -z "$(PRIVATE_KEY)" ] || [ -z "$(TO_ADDRESS)" ] || [ -z "$(AMOUNT)" ]; then \
+		echo "❌ Error: BANK_CONTRACT, PRIVATE_KEY, TO_ADDRESS, and AMOUNT must be set"; \
+		echo "📝 Example: make bank-transfer BANK_CONTRACT=0x... PRIVATE_KEY=0x... TO_ADDRESS=0x... AMOUNT=1000000000000000000"; \
+		exit 1; \
+	fi
+	cast send $(BANK_CONTRACT) "transferFunds(address,uint256)" $(TO_ADDRESS) $(AMOUNT) --private-key $(PRIVATE_KEY) --rpc-url http://localhost:8545
+
+# Borrow from bank (requires BANK_CONTRACT, PRIVATE_KEY, AMOUNT)
+# Usage: make bank-borrow BANK_CONTRACT=0x... PRIVATE_KEY=0x... AMOUNT=1000000000000000000
+bank-borrow:
+	@if [ -z "$(BANK_CONTRACT)" ] || [ -z "$(PRIVATE_KEY)" ] || [ -z "$(AMOUNT)" ]; then \
+		echo "❌ Error: BANK_CONTRACT, PRIVATE_KEY, and AMOUNT must be set"; \
+		echo "📝 Example: make bank-borrow BANK_CONTRACT=0x... PRIVATE_KEY=0x... AMOUNT=1000000000000000000"; \
+		exit 1; \
+	fi
+	cast send $(BANK_CONTRACT) "borrow(uint256)" $(AMOUNT) --private-key $(PRIVATE_KEY) --rpc-url http://localhost:8545
+
+# Pay back loan (requires BANK_CONTRACT, PRIVATE_KEY, AMOUNT)
+# Usage: make bank-payback BANK_CONTRACT=0x... PRIVATE_KEY=0x... AMOUNT=1000000000000000000
+bank-payback:
+	@if [ -z "$(BANK_CONTRACT)" ] || [ -z "$(PRIVATE_KEY)" ] || [ -z "$(AMOUNT)" ]; then \
+		echo "❌ Error: BANK_CONTRACT, PRIVATE_KEY, and AMOUNT must be set"; \
+		echo "📝 Example: make bank-payback BANK_CONTRACT=0x... PRIVATE_KEY=0x... AMOUNT=1000000000000000000"; \
+		exit 1; \
+	fi
+	cast send $(BANK_CONTRACT) "payBackLoan()" --private-key $(PRIVATE_KEY) --value $(AMOUNT) --rpc-url http://localhost:8545
+
+# Get borrower details (requires BANK_CONTRACT, USER_ADDRESS)
+# Usage: make bank-borrower-details BANK_CONTRACT=0x... USER_ADDRESS=0x...
+bank-borrower-details:
+	@if [ -z "$(BANK_CONTRACT)" ] || [ -z "$(USER_ADDRESS)" ]; then \
+		echo "❌ Error: BANK_CONTRACT and USER_ADDRESS must be set"; \
+		echo "📝 Example: make bank-borrower-details BANK_CONTRACT=0x... USER_ADDRESS=0x..."; \
+		exit 1; \
+	fi
+	cast call $(BANK_CONTRACT) "getBorrowerDetails(address)" $(USER_ADDRESS) --rpc-url http://localhost:8545
 
 # ================================
 # 📊 ANALYSIS COMMANDS
@@ -282,10 +370,24 @@ help:
 	@echo "  call              - Call contract function"
 	@echo "  send              - Send transaction"
 	@echo ""
+	@echo "🏦 BANK OPERATIONS:"
+	@echo "  bank-create-account  - Create bank account"
+	@echo "  bank-balance         - Check bank balance"
+	@echo "  bank-deposit         - Deposit to bank"
+	@echo "  bank-withdraw        - Withdraw from bank"
+	@echo "  bank-transfer        - Transfer between accounts"
+	@echo "  bank-borrow          - Borrow from bank"
+	@echo "  bank-payback         - Pay back loan"
+	@echo ""
 	@echo "📊 ANALYSIS:"
 	@echo "  snapshot          - Generate gas snapshot"
 	@echo "  storage           - Show storage layout"
 	@echo "  abi-bank          - Get Bank contract ABI"
+	@echo ""
+	@echo "💡 USAGE EXAMPLES:"
+	@echo "  make balance ADDRESS=0x1234..."
+	@echo "  make bank-balance BANK_CONTRACT=0x... USER_ADDRESS=0x..."
+	@echo "  make bank-deposit BANK_CONTRACT=0x... PRIVATE_KEY=0x... AMOUNT=1ether"
 
 # Default target
 .DEFAULT_GOAL := help
@@ -295,4 +397,5 @@ help:
         test-bank test-account test-borrow test-gas coverage coverage-report build clean install update \
         deploy-local deploy-local-verify deploy-sepolia deploy-goerli deploy-mainnet simulate-deploy \
         anvil anvil-custom format format-check lint size docs balance send-eth call send \
+        bank-create-account bank-balance bank-deposit bank-withdraw bank-transfer bank-borrow bank-payback bank-borrower-details \
         snapshot snapshot-diff storage abi-bank abi-account help
